@@ -5,7 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Eye, EyeOff } from "lucide-react";
 
-export function LoginForm() {
+interface LoginFormProps {
+  onToggleMode: () => void;
+}
+
+export function LoginForm({ onToggleMode }: LoginFormProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -55,9 +59,9 @@ export function LoginForm() {
           <div className="mt-6 text-center">
             <p className="text-sm text-muted-foreground">
               アカウントをお持ちでない方は{" "}
-              <a href="#" className="text-primary hover:underline">
+              <button type="button" onClick={onToggleMode} className="text-primary hover:underline cursor-pointer">
                 新規登録
-              </a>
+              </button>
             </p>
           </div>
         </CardContent>
