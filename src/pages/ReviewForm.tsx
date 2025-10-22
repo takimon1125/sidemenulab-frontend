@@ -1,0 +1,178 @@
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { apiClient, SideMenu, ReviewCreateRequest } from "@/services/api";
+import { ArrowLeft, Save, X, Star } from "lucide-react";
+
+export function ReviewForm() {
+  const navigate = useNavigate();
+
+  const [formData, setFormData] = useState({
+    side_menu_id: "",
+    rating: "5",
+    title: "",
+    comment: "",
+  });
+  const [sideMenus, setSideMenus] = useState<SideMenu[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadSideMenus();
+  }, []);
+
+  const loadSideMenus = async () => {
+    try {
+      // 実際のAPIからデータを取得
+      const sideMenus = await apiClient.getSideMenus();
+      setSideMenus(sideMenus);
+    } catch (error) {
+      setError("サイドメニューデータの読み込みに失敗しました");
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!formData.side_menu_id || !formData.rating) {
+      setError("サイドメニューと評価は必須です");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      const createData: ReviewCreateRequest = {
+        side_menu_id: parseInt(formData.side_menu_id),
+        rating: parseInt(formData.rating),
+        title: formData.title || undefined,
+        comment: formData.comment || undefined,
+      };
+      await apiClient.createReview(createData);
+
+      navigate("/reviews");
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "保存に失敗しました");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCancel = () => {
+    navigate("/reviews");
+  };
+
+  const handleInputChange = (field: keyof typeof formData, value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  const renderStars = (rating: number) => {
+    return Array.from({ length: 5 }, (_, i) => (
+      <button key={i} type="button" onClick={() => handleInputChange("rating", (i + 1).toString())} className={`h-8 w-8 ${i < rating ? "text-yellow-400 fill-current" : "text-gray-300"} hover:text-yellow-400 transition-colors`}>
+        <Star className="h-full w-full" />
+      </button>
+    ));
+  };
+
+  return (
+    <div className="space-y-4 lg:space-y-6">
+      {/* ページヘッダー */}
+      <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+        <Button variant="outline" onClick={handleCancel} className="w-full sm:w-auto">
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          戻る
+        </Button>
+        <div>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">新規レビュー作成</h1>
+          <p className="text-gray-600">サイドメニューのレビューを投稿します</p>
+        </div>
+      </div>
+
+      {/* フォーム */}
+      <Card>
+        <CardHeader>
+          <CardTitle>レビュー情報</CardTitle>
+          <CardDescription>サイドメニューのレビュー情報を入力してください</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="side_menu_id" className="block text-left font-medium text-gray-700">
+                サイドメニュー <span className="text-red-500">*</span>
+              </Label>
+              <Select value={formData.side_menu_id} onValueChange={(value) => handleInputChange("side_menu_id", value)} disabled={loading}>
+                <SelectTrigger>
+                  <SelectValue placeholder="サイドメニューを選択してください" />
+                </SelectTrigger>
+                <SelectContent>
+                  {sideMenus.map((sideMenu) => (
+                    <SelectItem key={sideMenu.id} value={sideMenu.id.toString()}>
+                      {sideMenu.name} - ¥{sideMenu.price} @ {sideMenu.store?.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="block text-left font-medium text-gray-700">
+                評価 <span className="text-red-500">*</span>
+              </Label>
+              <div className="flex items-center gap-2">
+                {renderStars(parseInt(formData.rating))}
+                <span className="text-sm text-gray-600 ml-2">{formData.rating}/5</span>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="title" className="block text-left font-medium text-gray-700">
+                タイトル
+              </Label>
+              <Input id="title" type="text" placeholder="レビューのタイトルを入力してください" value={formData.title} onChange={(e) => handleInputChange("title", e.target.value)} disabled={loading} />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="comment" className="block text-left font-medium text-gray-700">
+                コメント
+              </Label>
+              <textarea
+                id="comment"
+                placeholder="レビューのコメントを入力してください"
+                value={formData.comment}
+                onChange={(e) => handleInputChange("comment", e.target.value)}
+                disabled={loading}
+                rows={4}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+              />
+            </div>
+
+            {error && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+                <p className="text-red-800 text-sm">{error}</p>
+              </div>
+            )}
+
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end space-y-2 sm:space-y-0 sm:space-x-4">
+              <Button type="button" variant="outline" onClick={handleCancel} disabled={loading} className="w-full sm:w-auto">
+                <X className="h-4 w-4 mr-2" />
+                キャンセル
+              </Button>
+              <Button type="submit" disabled={loading} className="bg-purple-600 hover:bg-purple-700 text-white w-full sm:w-auto">
+                <Save className="h-4 w-4 mr-2" />
+                {loading ? "保存中..." : "保存"}
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
