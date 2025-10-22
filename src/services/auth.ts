@@ -38,6 +38,10 @@ export class AuthService {
           token: authData.token,
           isAuthenticated: true,
         };
+        // APIクライアントが期待する形式でも保存
+        if (authData.token?.access_token) {
+          localStorage.setItem("access_token", authData.token.access_token);
+        }
       }
     } catch (error) {
       console.error("認証情報の読み込みに失敗しました:", error);
@@ -49,6 +53,10 @@ export class AuthService {
   private saveAuthToStorage(): void {
     try {
       localStorage.setItem("auth", JSON.stringify(this.authState));
+      // APIクライアントが期待する形式でも保存
+      if (this.authState.token?.access_token) {
+        localStorage.setItem("access_token", this.authState.token.access_token);
+      }
     } catch (error) {
       console.error("認証情報の保存に失敗しました:", error);
     }
@@ -62,6 +70,7 @@ export class AuthService {
       isAuthenticated: false,
     };
     localStorage.removeItem("auth");
+    localStorage.removeItem("access_token");
   }
 
   // サインアップ

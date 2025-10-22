@@ -31,7 +31,13 @@ export function ReviewForm() {
       const sideMenus = await apiClient.getSideMenus();
       setSideMenus(sideMenus);
     } catch (error) {
-      setError("サイドメニューデータの読み込みに失敗しました");
+      if (error instanceof Error && error.message.includes("ログインが必要です")) {
+        alert("ログインが必要です");
+        // ログイン画面にリダイレクト
+        window.location.href = "/login";
+      } else {
+        setError("サイドメニューデータの読み込みに失敗しました");
+      }
     }
   };
 
@@ -57,7 +63,13 @@ export function ReviewForm() {
 
       navigate("/reviews");
     } catch (error) {
-      setError(error instanceof Error ? error.message : "保存に失敗しました");
+      if (error instanceof Error && error.message.includes("ログインが必要です")) {
+        alert("ログインが必要です");
+        // ログイン画面にリダイレクト
+        window.location.href = "/login";
+      } else {
+        setError(error instanceof Error ? error.message : "保存に失敗しました");
+      }
     } finally {
       setLoading(false);
     }
