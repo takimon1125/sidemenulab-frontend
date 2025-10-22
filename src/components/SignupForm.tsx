@@ -5,23 +5,32 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Eye, EyeOff } from "lucide-react";
 
-interface LoginFormProps {
+interface SignupFormProps {
   onToggleMode: () => void;
 }
 
-export function LoginForm({ onToggleMode }: LoginFormProps) {
+export function SignupForm({ onToggleMode }: SignupFormProps) {
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (password !== confirmPassword) {
+      alert("パスワードが一致しません");
+      return;
+    }
+
     setIsLoading(true);
 
-    // ログイン処理のシミュレーション
+    // サインアップ処理のシミュレーション
     setTimeout(() => {
-      console.log("ログイン試行:", { email, password });
+      console.log("サインアップ試行:", { name, email, password });
       setIsLoading(false);
     }, 1000);
   };
@@ -30,11 +39,17 @@ export function LoginForm({ onToggleMode }: LoginFormProps) {
     <div className="min-h-screen flex items-center justify-center bg-transparent">
       <Card className="w-full max-w-md mx-4">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center">ログイン</CardTitle>
-          <CardDescription className="text-center">アカウントにログインしてサービスをご利用ください</CardDescription>
+          <CardTitle className="text-2xl font-bold text-center">新規登録</CardTitle>
+          <CardDescription className="text-center">アカウントを作成してサービスをご利用ください</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name" className="block text-left font-medium text-gray-700">
+                お名前
+              </Label>
+              <Input id="name" type="text" placeholder="お名前を入力してください" value={name} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)} required disabled={isLoading} />
+            </div>
             <div className="space-y-2">
               <Label htmlFor="email" className="block text-left font-medium text-gray-700">
                 メールアドレス
@@ -52,15 +67,26 @@ export function LoginForm({ onToggleMode }: LoginFormProps) {
                 </button>
               </div>
             </div>
-            <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white" disabled={isLoading}>
-              {isLoading ? "ログイン中..." : "ログイン"}
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword" className="block text-left font-medium text-gray-700">
+                パスワード（確認）
+              </Label>
+              <div className="relative">
+                <Input id="confirmPassword" type={showConfirmPassword ? "text" : "password"} placeholder="パスワードを再入力してください" value={confirmPassword} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setConfirmPassword(e.target.value)} required disabled={isLoading} className="pr-10" />
+                <button type="button" className="absolute inset-y-0 right-0 pr-3 flex items-center" onClick={() => setShowConfirmPassword(!showConfirmPassword)} disabled={isLoading}>
+                  {showConfirmPassword ? <EyeOff className="h-4 w-4 text-gray-400 hover:text-gray-600" /> : <Eye className="h-4 w-4 text-gray-400 hover:text-gray-600" />}
+                </button>
+              </div>
+            </div>
+            <Button type="submit" className="w-full bg-green-600 hover:bg-green-700 text-white" disabled={isLoading}>
+              {isLoading ? "登録中..." : "新規登録"}
             </Button>
           </form>
           <div className="mt-6 text-center">
             <p className="text-sm text-muted-foreground">
-              アカウントをお持ちでない方は{" "}
+              すでにアカウントをお持ちの方は{" "}
               <button type="button" onClick={onToggleMode} className="text-primary hover:underline cursor-pointer">
-                新規登録
+                ログイン
               </button>
             </p>
           </div>
