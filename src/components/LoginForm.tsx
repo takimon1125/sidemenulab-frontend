@@ -4,26 +4,34 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Eye, EyeOff } from "lucide-react";
+import { authService } from "@/services/auth";
 
 interface LoginFormProps {
   onToggleMode: () => void;
+  onLoginSuccess: () => void;
 }
 
-export function LoginForm({ onToggleMode }: LoginFormProps) {
+export function LoginForm({ onToggleMode, onLoginSuccess }: LoginFormProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
+  const [error, setError] = useState<string | null>(null);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setError(null);
 
-    // ログイン処理のシミュレーション
-    setTimeout(() => {
-      console.log("ログイン試行:", { email, password });
+    try {
+      await authService.signIn({ email, password });
+      onLoginSuccess();
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "ログインに失敗しました");
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   return (
@@ -55,6 +63,11 @@ export function LoginForm({ onToggleMode }: LoginFormProps) {
             <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white" disabled={isLoading}>
               {isLoading ? "ログイン中..." : "ログイン"}
             </Button>
+            {error && (
+              <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
+                <p className="text-red-800 text-sm">{error}</p>
+              </div>
+            )}
           </form>
           <div className="mt-6 text-center">
             <p className="text-sm text-muted-foreground">

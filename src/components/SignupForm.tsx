@@ -4,12 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Eye, EyeOff } from "lucide-react";
+import { authService } from "@/services/auth";
 
 interface SignupFormProps {
   onToggleMode: () => void;
+  onSignupSuccess: () => void;
 }
 
-export function SignupForm({ onToggleMode }: SignupFormProps) {
+export function SignupForm({ onToggleMode, onSignupSuccess }: SignupFormProps) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -17,22 +19,27 @@ export function SignupForm({ onToggleMode }: SignupFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
+    setError(null);
 
     if (password !== confirmPassword) {
-      alert("パスワードが一致しません");
+      setError("パスワードが一致しません");
+      setIsLoading(false);
       return;
     }
 
-    setIsLoading(true);
-
-    // サインアップ処理のシミュレーション
-    setTimeout(() => {
-      console.log("サインアップ試行:", { name, email, password });
+    try {
+      await authService.signUp({ name, email, password });
+      onSignupSuccess();
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "登録に失敗しました");
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   return (
@@ -81,6 +88,11 @@ export function SignupForm({ onToggleMode }: SignupFormProps) {
             <Button type="submit" className="w-full bg-green-600 hover:bg-green-700 text-white" disabled={isLoading}>
               {isLoading ? "登録中..." : "新規登録"}
             </Button>
+            {error && (
+              <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
+                <p className="text-red-800 text-sm">{error}</p>
+              </div>
+            )}
           </form>
           <div className="mt-6 text-center">
             <p className="text-sm text-muted-foreground">
