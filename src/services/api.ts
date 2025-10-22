@@ -38,6 +38,109 @@ export interface SignInRequest {
   password: string;
 }
 
+// 店舗関連の型定義
+export interface Store {
+  id: number;
+  name: string;
+  address: string;
+  phone: string;
+  created_at: string;
+  updated_at: string;
+  deleted_at?: string | null;
+}
+
+export interface StoreCreateRequest {
+  name: string;
+  address: string;
+  phone: string;
+}
+
+export interface StoreUpdateRequest {
+  name?: string;
+  address?: string;
+  phone?: string;
+}
+
+// サイドメニュー関連の型定義
+export interface SideMenu {
+  id: number;
+  store_id: number;
+  name: string;
+  description: string;
+  price: number;
+  store?: Store;
+  created_at: string;
+  updated_at: string;
+  deleted_at?: string | null;
+}
+
+export interface SideMenuCreateRequest {
+  store_id: number;
+  name: string;
+  description: string;
+  price: number;
+}
+
+export interface SideMenuUpdateRequest {
+  store_id?: number;
+  name?: string;
+  description?: string;
+  price?: number;
+}
+
+// レビュー関連の型定義
+export interface Review {
+  id: number;
+  side_menu_id: number;
+  side_menu?: SideMenu;
+  user_id: number;
+  user?: User;
+  rating: number;
+  title?: string;
+  comment?: string;
+  is_verified: boolean;
+  created_at: string;
+  updated_at: string;
+  deleted_at?: string | null;
+}
+
+export interface ReviewCreateRequest {
+  side_menu_id: number;
+  rating: number;
+  title?: string;
+  comment?: string;
+}
+
+export interface ReviewImage {
+  id: number;
+  review_id: number;
+  image_url: string;
+  image_order: number;
+  created_at: string;
+}
+
+export interface ReviewImageCreateRequest {
+  image_url: string;
+  image_order?: number;
+}
+
+export interface ReviewLike {
+  id: number;
+  review_id: number;
+  user_id: number;
+  user?: User;
+  created_at: string;
+}
+
+// ダッシュボード統計の型定義
+export interface DashboardStats {
+  total_stores: number;
+  total_side_menus: number;
+  total_reviews: number;
+  recent_side_menus: SideMenu[];
+  recent_reviews: Review[];
+}
+
 // APIクライアントクラス
 export class ApiClient {
   private baseUrl: string;
@@ -65,11 +168,28 @@ export class ApiClient {
       const response = await fetch(url, config);
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "APIリクエストに失敗しました");
+        let errorMessage = "APIリクエストに失敗しました";
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorMessage;
+        } catch (parseError) {
+          errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+        }
+        throw new Error(errorMessage);
       }
 
-      return await response.json();
+      const responseText = await response.text();
+      if (!responseText) {
+        throw new Error("空のレスポンスが返されました");
+      }
+
+      try {
+        return JSON.parse(responseText);
+      } catch (parseError) {
+        console.error("JSONパースエラー:", parseError);
+        console.error("レスポンステキスト:", responseText);
+        throw new Error(`JSONパースエラー: ${parseError instanceof Error ? parseError.message : "不明なエラー"}`);
+      }
     } catch (error) {
       if (error instanceof Error) {
         throw error;
@@ -92,6 +212,137 @@ export class ApiClient {
       method: "POST",
       body: JSON.stringify(data),
     });
+  }
+
+  // 店舗一覧取得
+  async getStores(): Promise<Store[]> {
+    const response = await this.request<{ data: Store[] }>("/stores", {
+      method: "GET",
+    });
+    return response.data;
+  }
+
+  // 店舗詳細取得
+  async getStore(id: number): Promise<Store> {
+    const response = await this.request<{ data: Store }>(`/stores/${id}`, {
+      method: "GET",
+    });
+    return response.data;
+  }
+
+  // 店舗作成
+  async createStore(data: StoreCreateRequest): Promise<Store> {
+    const response = await this.request<{ data: Store }>("/stores", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+    return response.data;
+  }
+
+  // サイドメニュー一覧取得
+  async getSideMenus(): Promise<SideMenu[]> {
+    const response = await this.request<{ data: SideMenu[] }>("/side-menus", {
+      method: "GET",
+    });
+    return response.data;
+  }
+
+  // サイドメニュー詳細取得
+  async getSideMenu(id: number): Promise<SideMenu> {
+    const response = await this.request<{ data: SideMenu }>(`/side-menus/${id}`, {
+      method: "GET",
+    });
+    return response.data;
+  }
+
+  // 店舗別サイドメニュー一覧取得
+  async getSideMenusByStore(storeId: number): Promise<SideMenu[]> {
+    const response = await this.request<{ data: SideMenu[] }>(`/side-menus/store/${storeId}`, {
+      method: "GET",
+    });
+    return response.data;
+  }
+
+  // サイドメニュー作成
+  async createSideMenu(data: SideMenuCreateRequest): Promise<SideMenu> {
+    const response = await this.request<{ data: SideMenu }>("/side-menus", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+    return response.data;
+  }
+
+  // レビュー一覧取得
+  async getReviews(): Promise<Review[]> {
+    const response = await this.request<{ data: Review[] }>("/reviews", {
+      method: "GET",
+    });
+    return response.data;
+  }
+
+  // レビュー詳細取得
+  async getReview(id: number): Promise<Review> {
+    const response = await this.request<{ data: Review }>(`/reviews/${id}`, {
+      method: "GET",
+    });
+    return response.data;
+  }
+
+  // サイドメニュー別レビュー一覧取得
+  async getReviewsBySideMenu(sideMenuId: number): Promise<Review[]> {
+    const response = await this.request<{ data: Review[] }>(`/reviews/side-menu/${sideMenuId}`, {
+      method: "GET",
+    });
+    return response.data;
+  }
+
+  // レビュー作成
+  async createReview(data: ReviewCreateRequest): Promise<Review> {
+    const response = await this.request<{ data: Review }>("/reviews", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+    return response.data;
+  }
+
+  // レビュー画像アップロード
+  async uploadReviewImage(reviewId: number, data: ReviewImageCreateRequest): Promise<ReviewImage> {
+    const response = await this.request<{ data: ReviewImage }>(`/reviews/${reviewId}/images`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+    return response.data;
+  }
+
+  // レビュー画像一覧取得
+  async getReviewImages(reviewId: number): Promise<ReviewImage[]> {
+    const response = await this.request<{ data: ReviewImage[] }>(`/reviews/${reviewId}/images`, {
+      method: "GET",
+    });
+    return response.data;
+  }
+
+  // レビューにイイネ
+  async likeReview(reviewId: number): Promise<ReviewLike> {
+    const response = await this.request<{ data: ReviewLike }>(`/reviews/${reviewId}/like`, {
+      method: "POST",
+    });
+    return response.data;
+  }
+
+  // レビューのイイネ取り消し
+  async unlikeReview(reviewId: number): Promise<void> {
+    await this.request<void>(`/reviews/${reviewId}/like`, {
+      method: "DELETE",
+    });
+  }
+
+  // レビューのイイネ一覧取得
+  async getReviewLikes(reviewId: number): Promise<ReviewLike[]> {
+    const response = await this.request<{ data: ReviewLike[] }>(`/reviews/${reviewId}/likes`, {
+      method: "GET",
+    });
+    return response.data;
   }
 }
 
