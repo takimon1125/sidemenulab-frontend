@@ -30,7 +30,13 @@ export function StoreList() {
       const stores = await apiClient.getStores();
       setStores(stores);
     } catch (error) {
-      setError(error instanceof Error ? error.message : "店舗データの読み込みに失敗しました");
+      if (error instanceof Error && error.message.includes("ログインが必要です")) {
+        alert("ログインが必要です");
+        // ログイン画面にリダイレクト
+        window.location.href = "/login";
+      } else {
+        setError(error instanceof Error ? error.message : "店舗データの読み込みに失敗しました");
+      }
     } finally {
       setLoading(false);
     }

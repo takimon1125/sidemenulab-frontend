@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { apiClient, Review, SideMenu } from "@/services/api";
 import { Plus, Search, Star, Heart, MessageSquare, User, Calendar } from "lucide-react";
+import { authService } from "@/services/auth";
 
 export function ReviewList() {
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -16,6 +17,11 @@ export function ReviewList() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSideMenu, setSelectedSideMenu] = useState<string>("all");
   const [ratingFilter, setRatingFilter] = useState<string>("all");
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    setIsAuthenticated(authService.isAuthenticated());
+  }, []);
 
   useEffect(() => {
     loadData();
@@ -30,7 +36,7 @@ export function ReviewList() {
       setLoading(true);
       setError(null);
 
-      // 実際のAPIからデータを取得
+      // 実際のAPIからデータを取得（ログイン不要）
       const [reviewsData, sideMenusData] = await Promise.all([apiClient.getReviews(), apiClient.getSideMenus()]);
 
       setReviews(reviewsData);
@@ -73,7 +79,13 @@ export function ReviewList() {
       // レビュー一覧を再読み込み
       loadData();
     } catch (error) {
-      alert("イイネに失敗しました");
+      if (error instanceof Error && error.message.includes("ログインが必要です")) {
+        alert("ログインが必要です");
+        // ログイン画面にリダイレクト
+        window.location.href = "/login";
+      } else {
+        alert("イイネに失敗しました");
+      }
     }
   };
 
@@ -107,12 +119,14 @@ export function ReviewList() {
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900">レビュー一覧</h1>
           <p className="text-gray-600">サイドメニューのレビューを確認できます</p>
         </div>
-        <Link to="/reviews/new">
-          <Button className="w-full sm:w-auto">
-            <Plus className="h-4 w-4 mr-2" />
-            新規レビュー作成
-          </Button>
-        </Link>
+        {isAuthenticated && (
+          <Link to="/reviews/new">
+            <Button className="w-full sm:w-auto">
+              <Plus className="h-4 w-4 mr-2" />
+              新規レビュー作成
+            </Button>
+          </Link>
+        )}
       </div>
 
       {/* 検索・フィルター */}
@@ -199,12 +213,14 @@ export function ReviewList() {
                       <span>@ {review.side_menu?.store?.name}</span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" onClick={() => handleLike(review.id)} className="text-red-600 hover:text-red-700">
-                      <Heart className="h-4 w-4 mr-1" />
-                      イイネ
-                    </Button>
-                  </div>
+                  {isAuthenticated && (
+                    <div className="flex items-center gap-2">
+                      <Button variant="outline" size="sm" onClick={() => handleLike(review.id)} className="text-red-600 hover:text-red-700">
+                        <Heart className="h-4 w-4 mr-1" />
+                        イイネ
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>

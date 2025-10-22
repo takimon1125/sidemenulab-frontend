@@ -198,6 +198,25 @@ export class ApiClient {
     }
   }
 
+  private async authenticatedRequest<T>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> {
+    const token = localStorage.getItem("access_token");
+    if (!token) {
+      throw new Error("ログインが必要です");
+    }
+
+    const authHeaders = {
+      Authorization: `Bearer ${token}`,
+    };
+
+    return this.request<T>(endpoint, {
+      ...options,
+      headers: {
+        ...authHeaders,
+        ...options.headers,
+      },
+    });
+  }
+
   // サインアップ
   async signUp(data: SignUpRequest): Promise<ApiResponse<AuthResponse>> {
     return this.request<AuthResponse>("/auth/signup", {
@@ -216,7 +235,7 @@ export class ApiClient {
 
   // 店舗一覧取得
   async getStores(): Promise<Store[]> {
-    const response = await this.request<{ data: Store[] }>("/stores", {
+    const response = await this.authenticatedRequest<{ data: Store[] }>("/stores", {
       method: "GET",
     });
     return response.data;
@@ -224,7 +243,7 @@ export class ApiClient {
 
   // 店舗詳細取得
   async getStore(id: number): Promise<Store> {
-    const response = await this.request<{ data: Store }>(`/stores/${id}`, {
+    const response = await this.authenticatedRequest<{ data: Store }>(`/stores/${id}`, {
       method: "GET",
     });
     return response.data;
@@ -232,14 +251,14 @@ export class ApiClient {
 
   // 店舗作成
   async createStore(data: StoreCreateRequest): Promise<Store> {
-    const response = await this.request<{ data: Store }>("/stores", {
+    const response = await this.authenticatedRequest<{ data: Store }>("/stores", {
       method: "POST",
       body: JSON.stringify(data),
     });
     return response.data;
   }
 
-  // サイドメニュー一覧取得
+  // サイドメニュー一覧取得（ログイン不要 - レビュー表示用）
   async getSideMenus(): Promise<SideMenu[]> {
     const response = await this.request<{ data: SideMenu[] }>("/side-menus", {
       method: "GET",
@@ -249,7 +268,7 @@ export class ApiClient {
 
   // サイドメニュー詳細取得
   async getSideMenu(id: number): Promise<SideMenu> {
-    const response = await this.request<{ data: SideMenu }>(`/side-menus/${id}`, {
+    const response = await this.authenticatedRequest<{ data: SideMenu }>(`/side-menus/${id}`, {
       method: "GET",
     });
     return response.data;
@@ -257,7 +276,7 @@ export class ApiClient {
 
   // 店舗別サイドメニュー一覧取得
   async getSideMenusByStore(storeId: number): Promise<SideMenu[]> {
-    const response = await this.request<{ data: SideMenu[] }>(`/side-menus/store/${storeId}`, {
+    const response = await this.authenticatedRequest<{ data: SideMenu[] }>(`/side-menus/store/${storeId}`, {
       method: "GET",
     });
     return response.data;
@@ -265,14 +284,14 @@ export class ApiClient {
 
   // サイドメニュー作成
   async createSideMenu(data: SideMenuCreateRequest): Promise<SideMenu> {
-    const response = await this.request<{ data: SideMenu }>("/side-menus", {
+    const response = await this.authenticatedRequest<{ data: SideMenu }>("/side-menus", {
       method: "POST",
       body: JSON.stringify(data),
     });
     return response.data;
   }
 
-  // レビュー一覧取得
+  // レビュー一覧取得（ログイン不要）
   async getReviews(): Promise<Review[]> {
     const response = await this.request<{ data: Review[] }>("/reviews", {
       method: "GET",
@@ -282,7 +301,7 @@ export class ApiClient {
 
   // レビュー詳細取得
   async getReview(id: number): Promise<Review> {
-    const response = await this.request<{ data: Review }>(`/reviews/${id}`, {
+    const response = await this.authenticatedRequest<{ data: Review }>(`/reviews/${id}`, {
       method: "GET",
     });
     return response.data;
@@ -290,7 +309,7 @@ export class ApiClient {
 
   // サイドメニュー別レビュー一覧取得
   async getReviewsBySideMenu(sideMenuId: number): Promise<Review[]> {
-    const response = await this.request<{ data: Review[] }>(`/reviews/side-menu/${sideMenuId}`, {
+    const response = await this.authenticatedRequest<{ data: Review[] }>(`/reviews/side-menu/${sideMenuId}`, {
       method: "GET",
     });
     return response.data;
@@ -298,7 +317,7 @@ export class ApiClient {
 
   // レビュー作成
   async createReview(data: ReviewCreateRequest): Promise<Review> {
-    const response = await this.request<{ data: Review }>("/reviews", {
+    const response = await this.authenticatedRequest<{ data: Review }>("/reviews", {
       method: "POST",
       body: JSON.stringify(data),
     });
@@ -307,7 +326,7 @@ export class ApiClient {
 
   // レビュー画像アップロード
   async uploadReviewImage(reviewId: number, data: ReviewImageCreateRequest): Promise<ReviewImage> {
-    const response = await this.request<{ data: ReviewImage }>(`/reviews/${reviewId}/images`, {
+    const response = await this.authenticatedRequest<{ data: ReviewImage }>(`/reviews/${reviewId}/images`, {
       method: "POST",
       body: JSON.stringify(data),
     });
@@ -316,7 +335,7 @@ export class ApiClient {
 
   // レビュー画像一覧取得
   async getReviewImages(reviewId: number): Promise<ReviewImage[]> {
-    const response = await this.request<{ data: ReviewImage[] }>(`/reviews/${reviewId}/images`, {
+    const response = await this.authenticatedRequest<{ data: ReviewImage[] }>(`/reviews/${reviewId}/images`, {
       method: "GET",
     });
     return response.data;
@@ -324,7 +343,7 @@ export class ApiClient {
 
   // レビューにイイネ
   async likeReview(reviewId: number): Promise<ReviewLike> {
-    const response = await this.request<{ data: ReviewLike }>(`/reviews/${reviewId}/like`, {
+    const response = await this.authenticatedRequest<{ data: ReviewLike }>(`/reviews/${reviewId}/like`, {
       method: "POST",
     });
     return response.data;
@@ -332,14 +351,14 @@ export class ApiClient {
 
   // レビューのイイネ取り消し
   async unlikeReview(reviewId: number): Promise<void> {
-    await this.request<void>(`/reviews/${reviewId}/like`, {
+    await this.authenticatedRequest<void>(`/reviews/${reviewId}/like`, {
       method: "DELETE",
     });
   }
 
   // レビューのイイネ一覧取得
   async getReviewLikes(reviewId: number): Promise<ReviewLike[]> {
-    const response = await this.request<{ data: ReviewLike[] }>(`/reviews/${reviewId}/likes`, {
+    const response = await this.authenticatedRequest<{ data: ReviewLike[] }>(`/reviews/${reviewId}/likes`, {
       method: "GET",
     });
     return response.data;
