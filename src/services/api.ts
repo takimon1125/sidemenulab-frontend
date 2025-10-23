@@ -137,7 +137,7 @@ export interface ReviewComment {
   review_id: number;
   user_id: number;
   user?: User;
-  content: string;
+  comment: string; // APIレスポンスでは 'comment' フィールド
   created_at: string;
 }
 
@@ -209,6 +209,7 @@ export class ApiClient {
 
   private async authenticatedRequest<T>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> {
     const token = localStorage.getItem("access_token");
+
     if (!token) {
       throw new Error("ログインが必要です");
     }
@@ -409,7 +410,7 @@ export class ApiClient {
       },
       body: JSON.stringify({
         review_id: reviewId,
-        content: data.content,
+        Comment: data.content, // バックエンドが期待するフィールド名
       }),
     });
     return response.data;
@@ -422,7 +423,9 @@ export class ApiClient {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(data),
+      body: JSON.stringify({
+        Comment: data.content, // バックエンドが期待するフィールド名
+      }),
     });
     return response.data;
   }
