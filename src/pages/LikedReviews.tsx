@@ -86,11 +86,7 @@ export function LikedReviews() {
     if (searchTerm) {
       filtered = filtered.filter(
         (review) =>
-          review.title?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-          review.comment?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-          review.store_name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-          review.side_menu_name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-          review.user?.name.toLowerCase().includes(searchTerm.toLowerCase())
+          review.title?.toLowerCase().includes(searchTerm.toLowerCase()) || review.comment?.toLowerCase().includes(searchTerm.toLowerCase()) || review.store_name.toLowerCase().includes(searchTerm.toLowerCase()) || review.side_menu_name.toLowerCase().includes(searchTerm.toLowerCase()) || review.user?.name.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
@@ -144,7 +140,7 @@ export function LikedReviews() {
           ...prev,
           [reviewId]: Math.max(0, (prev[reviewId] || 0) - 1),
         }));
-        
+
         // いいねを取り消した場合、リストからも削除
         setReviews((prev) => prev.filter((review) => review.id !== reviewId));
       } else {

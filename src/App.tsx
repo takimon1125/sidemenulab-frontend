@@ -20,11 +20,19 @@ function App() {
     };
 
     checkAuth();
-  }, []);
 
-  const handleAuthSuccess = () => {
-    setIsAuthenticated(true);
-  };
+    // 認証状態の変更を監視するイベントリスナーを追加
+    const handleAuthChange = () => {
+      checkAuth();
+    };
+
+    // カスタムイベントをリッスン
+    window.addEventListener("authStateChanged", handleAuthChange);
+
+    return () => {
+      window.removeEventListener("authStateChanged", handleAuthChange);
+    };
+  }, []);
 
   return (
     <Router>
