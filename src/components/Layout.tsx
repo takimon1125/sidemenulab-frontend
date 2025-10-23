@@ -1,5 +1,6 @@
-import { ReactNode, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { useState } from "react";
+import type { ReactNode } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Modal } from "@/components/ui/modal";
@@ -15,23 +16,28 @@ interface LayoutProps {
 
 export function Layout({ children, isAuthenticated }: LayoutProps) {
   const location = useLocation();
+  const navigate = useNavigate();
   const currentUser = authService.getCurrentUser();
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isSignupModalOpen, setIsSignupModalOpen] = useState(false);
 
   const handleSignOut = () => {
     authService.signOut();
-    window.location.reload();
+    // 認証状態の変更を通知
+    window.dispatchEvent(new CustomEvent("authStateChanged"));
+    navigate("/"); // ホーム（レビュー一覧）にリダイレクト
   };
 
   const handleLoginSuccess = () => {
     setIsLoginModalOpen(false);
-    window.location.reload();
+    // 認証状態の変更を通知
+    window.dispatchEvent(new CustomEvent("authStateChanged"));
   };
 
   const handleSignupSuccess = () => {
     setIsSignupModalOpen(false);
-    window.location.reload();
+    // 認証状態の変更を通知
+    window.dispatchEvent(new CustomEvent("authStateChanged"));
   };
 
   const toggleMode = () => {
@@ -54,14 +60,7 @@ export function Layout({ children, isAuthenticated }: LayoutProps) {
     setIsLoginModalOpen(false);
   };
 
-  const navigation = [
-    { name: "レビュー", href: "/reviews", icon: MessageSquare, public: true },
-    ...(isAuthenticated
-      ? [
-          { name: "いいねしたレビュー", href: "/reviews/liked", icon: Heart, public: false },
-        ]
-      : []),
-  ];
+  const navigation = [{ name: "レビュー", href: "/reviews", icon: MessageSquare, public: true }, ...(isAuthenticated ? [{ name: "いいねしたレビュー", href: "/reviews/liked", icon: Heart, public: false }] : [])];
 
   const isActive = (path: string) => {
     if (path === "/reviews") {

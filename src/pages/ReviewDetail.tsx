@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "../components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { apiClient, type Review, type ReviewComment } from "@/services/api";
-import { Star, Heart, MessageSquare, User, Calendar, Edit, Trash2, Send, ArrowLeft, Image as ImageIcon } from "lucide-react";
+import { Star, Heart, MessageSquare, User, Calendar, Edit, Trash2, Send, ArrowLeft, Image as ImageIcon, Upload } from "lucide-react";
 import { authService } from "@/services/auth";
 
 export function ReviewDetail() {
@@ -30,6 +30,10 @@ export function ReviewDetail() {
     comment: "",
     rating: 5,
   });
+
+  // 画像アップロード用の状態
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     setIsAuthenticated(authService.isAuthenticated());
@@ -131,23 +135,86 @@ export function ReviewDetail() {
         rating: review.rating,
       });
     }
+    setSelectedFiles([]);
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    const validFiles = files.filter((file) => {
+      const isValidType = file.type.startsWith("image/");
+      const isValidSize = file.size <= 5 * 1024 * 1024; // 5MB制限
+      return isValidType && isValidSize;
+    });
+
+    if (validFiles.length !== files.length) {
+      alert("画像ファイルは5MB以下のJPG、PNG、GIF形式のみ対応しています");
+      return;
+    }
+
+    const newFiles = [...selectedFiles, ...validFiles].slice(0, 10); // 最大10枚
+    setSelectedFiles(newFiles);
+  };
+
+  const handleRemoveSelectedFile = (index: number) => {
+    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    const files = Array.from(e.dataTransfer.files);
+    const validFiles = files.filter((file) => {
+      const isValidType = file.type.startsWith("image/");
+      const isValidSize = file.size <= 5 * 1024 * 1024; // 5MB制限
+      return isValidType && isValidSize;
+    });
+
+    if (validFiles.length !== files.length) {
+      alert("画像ファイルは5MB以下のJPG、PNG、GIF形式のみ対応しています");
+      return;
+    }
+
+    const newFiles = [...selectedFiles, ...validFiles].slice(0, 10); // 最大10枚
+    setSelectedFiles(newFiles);
   };
 
   const handleSaveEdit = async () => {
-    if (!review) return;
+    if (!review || saving) return;
 
     try {
+      setSaving(true);
+
+      // レビュー内容を更新
       const updatedReview = await apiClient.updateReview(review.id, {
+        store_name: review.store_name,
+        side_menu_name: review.side_menu_name,
         title: editForm.title,
         comment: editForm.comment,
         rating: editForm.rating,
       });
 
-      setReview(updatedReview);
+      // 選択された画像がある場合はアップロード
+      if (selectedFiles.length > 0) {
+        try {
+          await apiClient.uploadReviewImages(review.id, selectedFiles);
+          setSelectedFiles([]);
+        } catch (error) {
+          console.error("画像アップロードエラー:", error);
+          alert("レビューは更新されましたが、画像のアップロードに失敗しました");
+        }
+      }
+
+      // レビュー詳細を再読み込み
+      await loadReviewDetail();
       setIsEditing(false);
       alert("レビューを更新しました");
     } catch {
       alert("レビューの更新に失敗しました");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -161,6 +228,22 @@ export function ReviewDetail() {
         navigate("/reviews");
       } catch {
         alert("レビューの削除に失敗しました");
+      }
+    }
+  };
+
+  const handleDeleteImage = async (imageId: number) => {
+    if (confirm("この画像を削除しますか？")) {
+      try {
+        await apiClient.deleteReviewImage(imageId);
+        // ローカル状態を更新（レビュー詳細の再読み込みを避ける）
+        if (review) {
+          const updatedImages = review.images?.filter((img) => img.id !== imageId) || [];
+          setReview({ ...review, images: updatedImages });
+        }
+        alert("画像を削除しました");
+      } catch {
+        alert("画像の削除に失敗しました");
       }
     }
   };
@@ -292,9 +375,64 @@ export function ReviewDetail() {
                 <Label htmlFor="comment">コメント</Label>
                 <Textarea id="comment" value={editForm.comment} onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setEditForm((prev) => ({ ...prev, comment: e.target.value }))} placeholder="レビューのコメント" rows={4} />
               </div>
+
+              {/* 画像アップロード機能 */}
+              <div>
+                <Label>画像管理</Label>
+
+                {/* 既存画像のプレビューと削除 */}
+                {review && review.images && review.images.length > 0 && (
+                  <div className="mt-4">
+                    <h4 className="text-sm font-medium text-gray-700 mb-2">既存の画像 ({review.images.length}枚)</h4>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                      {review.images.map((image, index) => (
+                        <div key={image.id} className="relative">
+                          <img src={image.image_url} alt={`既存画像 ${index + 1}`} className="w-full h-20 object-cover rounded-lg border border-gray-200" />
+                          <button onClick={() => handleDeleteImage(image.id)} disabled={saving} className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 disabled:bg-gray-400 disabled:cursor-not-allowed" title="画像を削除">
+                            <Trash2 className="h-3 w-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* 新しい画像のアップロード */}
+                <div className="mt-4">
+                  <h4 className="text-sm font-medium text-gray-700 mb-2">新しい画像を追加（最大10枚、各5MB以下）</h4>
+                  <div className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${saving ? "border-gray-200 bg-gray-50 cursor-not-allowed" : "border-gray-300 hover:border-gray-400"}`} onDragOver={saving ? undefined : handleDragOver} onDrop={saving ? undefined : handleDrop}>
+                    <input type="file" multiple accept="image/*" onChange={handleFileSelect} disabled={saving} className="hidden" id="image-upload-edit" />
+                    <label htmlFor="image-upload-edit" className={`cursor-pointer ${saving ? "cursor-not-allowed opacity-50" : ""}`}>
+                      <Upload className="h-8 w-8 mx-auto text-gray-400 mb-2" />
+                      <p className="text-sm text-gray-600">画像を選択するか、ここにドラッグ&ドロップ</p>
+                      <p className="text-xs text-gray-500 mt-1">JPG、PNG、GIF形式、各5MB以下</p>
+                    </label>
+                  </div>
+                </div>
+
+                {/* 選択されたファイルのプレビュー */}
+                {selectedFiles.length > 0 && (
+                  <div className="mt-4">
+                    <h4 className="text-sm font-medium text-gray-700 mb-2">追加する画像 ({selectedFiles.length}枚)</h4>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                      {selectedFiles.map((file, index) => (
+                        <div key={index} className="relative group">
+                          <img src={URL.createObjectURL(file)} alt={`プレビュー ${index + 1}`} className="w-full h-24 object-cover rounded-lg border border-gray-200" />
+                          <button onClick={() => handleRemoveSelectedFile(index)} disabled={saving} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 disabled:bg-gray-400 disabled:cursor-not-allowed" title="削除">
+                            <Trash2 className="h-3 w-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <div className="flex gap-2">
-                <Button onClick={handleSaveEdit}>保存</Button>
-                <Button variant="outline" onClick={handleCancelEdit}>
+                <Button onClick={handleSaveEdit} disabled={saving} className="bg-green-600 hover:bg-green-700 text-white disabled:bg-gray-400 disabled:cursor-not-allowed">
+                  {saving ? "保存中..." : "保存"}
+                </Button>
+                <Button variant="outline" onClick={handleCancelEdit} disabled={saving} className="border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400 disabled:border-gray-300 disabled:text-gray-400 disabled:cursor-not-allowed">
                   キャンセル
                 </Button>
               </div>
@@ -345,6 +483,12 @@ export function ReviewDetail() {
                                   e.currentTarget.style.display = "none";
                                 }}
                               />
+                              {/* 画像削除ボタン（レビューの所有者のみ表示、編集モード時のみ） */}
+                              {isAuthenticated && review.user_id === authService.getCurrentUser()?.id && isEditing && (
+                                <button onClick={() => handleDeleteImage(image.id)} className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors" title="画像を削除">
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              )}
                             </div>
                           );
                         })}

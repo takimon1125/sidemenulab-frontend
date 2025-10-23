@@ -220,6 +220,22 @@ export class ApiClient {
     return response.data;
   }
 
+  // レビュー編集
+  async updateReview(reviewId: number, data: ReviewCreateRequest): Promise<Review> {
+    const response = await this.authenticatedRequest<{ data: Review }>(`/reviews/${reviewId}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+    return response.data;
+  }
+
+  // レビュー削除
+  async deleteReview(reviewId: number): Promise<void> {
+    await this.authenticatedRequest(`/reviews/${reviewId}`, {
+      method: "DELETE",
+    });
+  }
+
   // レビュー画像アップロード
   async uploadReviewImage(reviewId: number, data: ReviewImageCreateRequest): Promise<ReviewImage> {
     const response = await this.authenticatedRequest<{ data: ReviewImage }>(`/reviews/${reviewId}/images`, {
@@ -227,6 +243,13 @@ export class ApiClient {
       body: JSON.stringify(data),
     });
     return response.data;
+  }
+
+  // レビュー画像削除
+  async deleteReviewImage(imageId: number): Promise<void> {
+    await this.authenticatedRequest(`/reviews/images/${imageId}`, {
+      method: "DELETE",
+    });
   }
 
   // 複数画像アップロード
