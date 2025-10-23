@@ -1,10 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { apiClient, Review, SideMenu } from "@/services/api";
+import { apiClient, type Review, type SideMenu } from "@/services/api";
 import { Plus, Search, Star, Heart, MessageSquare, User, Calendar } from "lucide-react";
 import { authService } from "@/services/auth";
 
@@ -18,20 +18,51 @@ export function ReviewList() {
   const [selectedSideMenu, setSelectedSideMenu] = useState<string>("all");
   const [ratingFilter, setRatingFilter] = useState<string>("all");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [reviewLikes, setReviewLikes] = useState<Record<number, number>>({}); // レビューID -> いいね数
+  const [userLikedReviews, setUserLikedReviews] = useState<Set<number>>(new Set()); // ユーザーがいいねしたレビューID
 
   useEffect(() => {
     setIsAuthenticated(authService.isAuthenticated());
   }, []);
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  const loadReviewLikes = useCallback(
+    async (reviews: Review[]) => {
+      try {
+        const likesData: Record<number, number> = {};
+        const userLikedSet = new Set<number>();
 
-  useEffect(() => {
-    filterReviews();
-  }, [reviews, searchTerm, selectedSideMenu, ratingFilter]);
+        // 各レビューのいいね数を取得（ログインしていなくても取得）
+        for (const review of reviews) {
+          try {
+            const likes = await apiClient.getReviewLikes(review.id);
+            likesData[review.id] = likes.length;
 
-  const loadData = async () => {
+            // ログインしている場合のみ、現在のユーザーがいいねしているかチェック
+            if (isAuthenticated) {
+              const currentUser = authService.getCurrentUser();
+              if (currentUser) {
+                const userLiked = likes.some((like) => like.user_id === currentUser.id);
+                if (userLiked) {
+                  userLikedSet.add(review.id);
+                }
+              }
+            }
+          } catch {
+            // いいね情報の取得に失敗した場合は0として扱う
+            likesData[review.id] = 0;
+          }
+        }
+
+        setReviewLikes(likesData);
+        setUserLikedReviews(userLikedSet);
+      } catch (error) {
+        console.error("いいね情報の読み込みに失敗しました:", error);
+      }
+    },
+    [isAuthenticated]
+  );
+
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -41,14 +72,17 @@ export function ReviewList() {
 
       setReviews(reviewsData);
       setSideMenus(sideMenusData);
+
+      // 各レビューのいいね数を取得
+      await loadReviewLikes(reviewsData);
     } catch (error) {
       setError(error instanceof Error ? error.message : "データの読み込みに失敗しました");
     } finally {
       setLoading(false);
     }
-  };
+  }, [loadReviewLikes]);
 
-  const filterReviews = () => {
+  const filterReviews = useCallback(() => {
     let filtered = [...reviews];
 
     // 検索フィルター
@@ -67,24 +101,66 @@ export function ReviewList() {
     }
 
     setFilteredReviews(filtered);
-  };
+  }, [reviews, searchTerm, selectedSideMenu, ratingFilter]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  useEffect(() => {
+    filterReviews();
+  }, [filterReviews]);
+
+  useEffect(() => {
+    // レビューデータが読み込まれたら、ログイン状態に関係なくいいね情報を取得
+    if (reviews.length > 0) {
+      loadReviewLikes(reviews);
+    }
+  }, [reviews, loadReviewLikes]);
+
+  useEffect(() => {
+    // 認証状態が変更された時にもいいね情報を再読み込み（ユーザーのいいね状態を更新するため）
+    if (reviews.length > 0) {
+      loadReviewLikes(reviews);
+    }
+  }, [isAuthenticated, reviews, loadReviewLikes]);
 
   const renderStars = (rating: number) => {
     return Array.from({ length: 5 }, (_, i) => <Star key={i} className={`h-4 w-4 ${i < rating ? "text-yellow-400 fill-current" : "text-gray-300"}`} />);
   };
 
   const handleLike = async (reviewId: number) => {
+    const isLiked = userLikedReviews.has(reviewId);
+
     try {
-      await apiClient.likeReview(reviewId);
-      // レビュー一覧を再読み込み
-      loadData();
+      if (isLiked) {
+        // いいねを取り消し
+        await apiClient.unlikeReview(reviewId);
+        setUserLikedReviews((prev) => {
+          const newSet = new Set(prev);
+          newSet.delete(reviewId);
+          return newSet;
+        });
+        setReviewLikes((prev) => ({
+          ...prev,
+          [reviewId]: Math.max(0, (prev[reviewId] || 0) - 1),
+        }));
+      } else {
+        // いいねを追加
+        await apiClient.likeReview(reviewId);
+        setUserLikedReviews((prev) => new Set(prev).add(reviewId));
+        setReviewLikes((prev) => ({
+          ...prev,
+          [reviewId]: (prev[reviewId] || 0) + 1,
+        }));
+      }
     } catch (error) {
       if (error instanceof Error && error.message.includes("ログインが必要です")) {
         alert("ログインが必要です");
         // ログイン画面にリダイレクト
         window.location.href = "/login";
       } else {
-        alert("イイネに失敗しました");
+        alert(isLiked ? "いいねの取り消しに失敗しました" : "いいねに失敗しました");
       }
     }
   };
@@ -211,13 +287,20 @@ export function ReviewList() {
                       <span className="font-medium">{review.side_menu?.name}</span>
                       <span>¥{review.side_menu?.price}</span>
                       <span>@ {review.side_menu?.store?.name}</span>
+                      {reviewLikes[review.id] > 0 && (
+                        <span className="flex items-center gap-1 text-red-600">
+                          <Heart className="h-3 w-3" />
+                          {reviewLikes[review.id]}
+                        </span>
+                      )}
                     </div>
                   </div>
                   {isAuthenticated && (
                     <div className="flex items-center gap-2">
-                      <Button variant="outline" size="sm" onClick={() => handleLike(review.id)} className="text-red-600 hover:text-red-700">
-                        <Heart className="h-4 w-4 mr-1" />
-                        イイネ
+                      <Button variant="outline" size="sm" onClick={() => handleLike(review.id)} className={`${userLikedReviews.has(review.id) ? "text-red-600 hover:text-red-700 bg-red-50 border-red-200" : "text-gray-600 hover:text-red-600"}`}>
+                        <Heart className={`h-4 w-4 mr-1 ${userLikedReviews.has(review.id) ? "fill-current" : ""}`} />
+                        {userLikedReviews.has(review.id) ? "いいね済み" : "いいね"}
+                        {reviewLikes[review.id] > 0 && <span className="ml-1 text-xs">({reviewLikes[review.id]})</span>}
                       </Button>
                     </div>
                   )}
