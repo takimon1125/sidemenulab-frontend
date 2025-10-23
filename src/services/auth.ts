@@ -122,6 +122,7 @@ export class AuthService {
 
   // 現在のユーザーを取得
   getCurrentUser(): AuthResponse["user"] | null {
+    console.log("現在のユーザー情報:", this.authState.user);
     return this.authState.user;
   }
 

@@ -99,6 +99,7 @@ export interface Review {
   title?: string;
   comment?: string;
   is_verified: boolean;
+  images?: ReviewImage[];
   created_at: string;
   updated_at: string;
   deleted_at?: string | null;
@@ -333,6 +334,41 @@ export class ApiClient {
       body: JSON.stringify(data),
     });
     return response.data;
+  }
+
+  // 複数画像アップロード
+  async uploadReviewImages(reviewId: number, files: File[]): Promise<ReviewImage[]> {
+    const token = localStorage.getItem("access_token");
+    if (!token) {
+      throw new Error("ログインが必要です");
+    }
+
+    const formData = new FormData();
+    files.forEach((file) => {
+      formData.append("images", file);
+    });
+
+    const response = await fetch(`${this.baseUrl}/reviews/${reviewId}/upload-images`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      let errorMessage = "画像アップロードに失敗しました";
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.error || errorMessage;
+      } catch (parseError) {
+        errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+      }
+      throw new Error(errorMessage);
+    }
+
+    const result = await response.json();
+    return result.data;
   }
 
   // レビュー画像一覧取得

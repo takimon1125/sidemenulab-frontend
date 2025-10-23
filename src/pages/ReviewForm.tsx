@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { apiClient, SideMenu, ReviewCreateRequest } from "@/services/api";
-import { ArrowLeft, Save, X, Star } from "lucide-react";
+import { authService } from "@/services/auth";
+import { ArrowLeft, Save, X, Star, Upload, Image, Trash2 } from "lucide-react";
 
 export function ReviewForm() {
   const navigate = useNavigate();
@@ -20,6 +21,8 @@ export function ReviewForm() {
   const [sideMenus, setSideMenus] = useState<SideMenu[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedImages, setSelectedImages] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
 
   useEffect(() => {
     loadSideMenus();
@@ -41,6 +44,38 @@ export function ReviewForm() {
     }
   };
 
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    const validFiles = files.filter((file) => {
+      const isValidType = file.type.startsWith("image/");
+      const isValidSize = file.size <= 5 * 1024 * 1024; // 5MB制限
+      return isValidType && isValidSize;
+    });
+
+    if (validFiles.length !== files.length) {
+      setError("画像ファイルは5MB以下のJPG、PNG、GIF形式のみ対応しています");
+      return;
+    }
+
+    const newImages = [...selectedImages, ...validFiles].slice(0, 10); // 最大10枚
+    setSelectedImages(newImages);
+
+    // プレビュー画像を生成
+    const newPreviews = newImages.map((file) => URL.createObjectURL(file));
+    setImagePreviews(newPreviews);
+  };
+
+  const removeImage = (index: number) => {
+    const newImages = selectedImages.filter((_, i) => i !== index);
+    const newPreviews = imagePreviews.filter((_, i) => i !== index);
+
+    // 削除されたプレビューのURLを解放
+    URL.revokeObjectURL(imagePreviews[index]);
+
+    setSelectedImages(newImages);
+    setImagePreviews(newPreviews);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -53,13 +88,25 @@ export function ReviewForm() {
       setLoading(true);
       setError(null);
 
+      // 現在のユーザー情報を確認
+      const currentUser = authService.getCurrentUser();
+      console.log("レビュー作成時のユーザー情報:", currentUser);
+      console.log("アクセストークン:", authService.getAccessToken());
+
+      // レビューを作成
       const createData: ReviewCreateRequest = {
         side_menu_id: parseInt(formData.side_menu_id),
         rating: parseInt(formData.rating),
         title: formData.title || undefined,
         comment: formData.comment || undefined,
       };
-      await apiClient.createReview(createData);
+      console.log("レビュー作成データ:", createData);
+      const review = await apiClient.createReview(createData);
+
+      // 画像をアップロード
+      if (selectedImages.length > 0) {
+        await apiClient.uploadReviewImages(review.id, selectedImages);
+      }
 
       navigate("/reviews");
     } catch (error) {
@@ -164,6 +211,31 @@ export function ReviewForm() {
                 rows={4}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label className="block text-left font-medium text-gray-700">画像（最大10枚、各5MB以下）</Label>
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
+                <input type="file" multiple accept="image/*" onChange={handleImageSelect} disabled={loading} className="hidden" id="image-upload" />
+                <label htmlFor="image-upload" className="cursor-pointer">
+                  <Upload className="h-8 w-8 mx-auto text-gray-400 mb-2" />
+                  <p className="text-sm text-gray-600">画像を選択するか、ここにドラッグ&ドロップ</p>
+                  <p className="text-xs text-gray-500 mt-1">JPG、PNG、GIF形式、各5MB以下</p>
+                </label>
+              </div>
+
+              {imagePreviews.length > 0 && (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mt-4">
+                  {imagePreviews.map((preview, index) => (
+                    <div key={index} className="relative group">
+                      <img src={preview} alt={`プレビュー ${index + 1}`} className="w-full h-24 object-cover rounded-lg border border-gray-200" />
+                      <button type="button" onClick={() => removeImage(index)} disabled={loading} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600">
+                        <Trash2 className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {error && (
