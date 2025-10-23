@@ -6,6 +6,7 @@ import { StoreForm } from "./pages/StoreForm";
 import { SideMenuList } from "./pages/SideMenuList";
 import { SideMenuForm } from "./pages/SideMenuForm";
 import { ReviewList } from "./pages/ReviewList";
+import { ReviewDetail } from "./pages/ReviewDetail";
 import { ReviewForm } from "./pages/ReviewForm";
 import { Layout } from "./components/Layout";
 import { authService } from "./services/auth";
@@ -35,6 +36,7 @@ function App() {
           {/* ログイン不要のルート */}
           <Route path="/" element={<ReviewList />} />
           <Route path="/reviews" element={<ReviewList />} />
+          <Route path="/reviews/:id" element={<ReviewDetail />} />
 
           {/* ログイン必須のルート */}
           {isAuthenticated && (

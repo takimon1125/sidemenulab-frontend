@@ -265,7 +265,9 @@ export function ReviewList() {
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
-                      <h3 className="font-semibold text-lg text-gray-900">{review.title || "タイトルなし"}</h3>
+                      <Link to={`/reviews/${review.id}`} className="font-semibold text-lg text-blue-600 hover:text-blue-800 hover:underline">
+                        {review.title || "タイトルなし"}
+                      </Link>
                       {review.is_verified && <span className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">購入確認済み</span>}
                     </div>
                     <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
