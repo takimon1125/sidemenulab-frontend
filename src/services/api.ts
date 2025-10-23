@@ -132,6 +132,15 @@ export interface ReviewLike {
   created_at: string;
 }
 
+export interface ReviewComment {
+  id: number;
+  review_id: number;
+  user_id: number;
+  user?: User;
+  content: string;
+  created_at: string;
+}
+
 // ダッシュボード統計の型定義
 export interface DashboardStats {
   total_stores: number;
@@ -299,14 +308,6 @@ export class ApiClient {
     return response.data;
   }
 
-  // レビュー詳細取得
-  async getReview(id: number): Promise<Review> {
-    const response = await this.authenticatedRequest<{ data: Review }>(`/reviews/${id}`, {
-      method: "GET",
-    });
-    return response.data;
-  }
-
   // サイドメニュー別レビュー一覧取得
   async getReviewsBySideMenu(sideMenuId: number): Promise<Review[]> {
     const response = await this.authenticatedRequest<{ data: Review[] }>(`/reviews/side-menu/${sideMenuId}`, {
@@ -362,6 +363,75 @@ export class ApiClient {
       method: "GET",
     });
     return response.data;
+  }
+
+  // レビュー詳細取得
+  async getReview(reviewId: number): Promise<Review> {
+    const response = await this.request<{ data: Review }>(`/reviews/${reviewId}`, {
+      method: "GET",
+    });
+    return response.data;
+  }
+
+  // レビュー更新
+  async updateReview(reviewId: number, data: { title?: string; comment?: string; rating?: number }): Promise<Review> {
+    const response = await this.authenticatedRequest<{ data: Review }>(`/reviews/${reviewId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
+    return response.data;
+  }
+
+  // レビュー削除
+  async deleteReview(reviewId: number): Promise<void> {
+    await this.authenticatedRequest<void>(`/reviews/${reviewId}`, {
+      method: "DELETE",
+    });
+  }
+
+  // レビューコメント一覧取得
+  async getReviewComments(reviewId: number): Promise<ReviewComment[]> {
+    const response = await this.request<{ data: ReviewComment[] }>(`/review-comments/review/${reviewId}`, {
+      method: "GET",
+    });
+    return response.data;
+  }
+
+  // レビューコメント作成
+  async createReviewComment(reviewId: number, data: { content: string }): Promise<ReviewComment> {
+    const response = await this.authenticatedRequest<{ data: ReviewComment }>("/review-comments", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        review_id: reviewId,
+        content: data.content,
+      }),
+    });
+    return response.data;
+  }
+
+  // レビューコメント更新
+  async updateReviewComment(commentId: number, data: { content: string }): Promise<ReviewComment> {
+    const response = await this.authenticatedRequest<{ data: ReviewComment }>(`/review-comments/${commentId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
+    return response.data;
+  }
+
+  // レビューコメント削除
+  async deleteReviewComment(commentId: number): Promise<void> {
+    await this.authenticatedRequest<void>(`/review-comments/${commentId}`, {
+      method: "DELETE",
+    });
   }
 }
 
