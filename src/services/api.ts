@@ -203,6 +203,14 @@ export class ApiClient {
     return response.data;
   }
 
+  // いいねしたレビュー一覧取得
+  async getLikedReviews(): Promise<Review[]> {
+    const response = await this.authenticatedRequest<{ data: Review[] }>("/reviews/liked", {
+      method: "GET",
+    });
+    return response.data;
+  }
+
   // レビュー作成
   async createReview(data: ReviewCreateRequest): Promise<Review> {
     const response = await this.authenticatedRequest<{ data: Review }>("/reviews", {

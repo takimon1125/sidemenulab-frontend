@@ -4,6 +4,7 @@ import { Dashboard } from "./pages/Dashboard";
 import { ReviewList } from "./pages/ReviewList";
 import { ReviewDetail } from "./pages/ReviewDetail";
 import { ReviewForm } from "./pages/ReviewForm";
+import { LikedReviews } from "./pages/LikedReviews";
 import { Layout } from "./components/Layout";
 import { authService } from "./services/auth";
 import "./App.css";
@@ -39,6 +40,7 @@ function App() {
             <>
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/reviews/new" element={<ReviewForm />} />
+              <Route path="/reviews/liked" element={<LikedReviews />} />
             </>
           )}
 
