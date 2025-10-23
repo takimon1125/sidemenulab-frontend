@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Modal } from "@/components/ui/modal";
-import { MessageSquare, LogOut, Plus } from "lucide-react";
+import { MessageSquare, LogOut, Plus, Heart } from "lucide-react";
 import { authService } from "@/services/auth";
 import { LoginForm } from "./LoginForm";
 import { SignupForm } from "./SignupForm";
@@ -54,11 +54,18 @@ export function Layout({ children, isAuthenticated }: LayoutProps) {
     setIsLoginModalOpen(false);
   };
 
-  const navigation = [{ name: "レビュー", href: "/reviews", icon: MessageSquare, public: true }];
+  const navigation = [
+    { name: "レビュー", href: "/reviews", icon: MessageSquare, public: true },
+    ...(isAuthenticated
+      ? [
+          { name: "いいねしたレビュー", href: "/reviews/liked", icon: Heart, public: false },
+        ]
+      : []),
+  ];
 
   const isActive = (path: string) => {
     if (path === "/reviews") {
-      return location.pathname === "/" || location.pathname.startsWith("/reviews");
+      return location.pathname === "/" || (location.pathname.startsWith("/reviews") && !location.pathname.startsWith("/reviews/liked"));
     }
     return location.pathname.startsWith(path);
   };

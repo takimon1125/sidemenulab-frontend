@@ -175,7 +175,7 @@ export function ReviewDetail() {
         content: newComment.trim(),
       });
 
-      setComments((prev) => [...prev, comment]);
+      setComments((prev) => [comment, ...prev]);
       setNewComment("");
     } catch (error) {
       console.error("Comment submission error:", error);
