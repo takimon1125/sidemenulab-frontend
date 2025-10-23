@@ -4,18 +4,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { apiClient, type Review, type SideMenu } from "@/services/api";
+import { apiClient, type Review } from "@/services/api";
 import { Plus, Search, Star, Heart, MessageSquare, User, Calendar, Image as ImageIcon } from "lucide-react";
 import { authService } from "@/services/auth";
 
 export function ReviewList() {
   const [reviews, setReviews] = useState<Review[]>([]);
-  const [sideMenus, setSideMenus] = useState<SideMenu[]>([]);
   const [filteredReviews, setFilteredReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedSideMenu, setSelectedSideMenu] = useState<string>("all");
   const [ratingFilter, setRatingFilter] = useState<string>("all");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [reviewLikes, setReviewLikes] = useState<Record<number, number>>({}); // レビューID -> いいね数
@@ -68,10 +66,9 @@ export function ReviewList() {
       setError(null);
 
       // 実際のAPIからデータを取得（ログイン不要）
-      const [reviewsData, sideMenusData] = await Promise.all([apiClient.getReviews(), apiClient.getSideMenus()]);
+      const reviewsData = await apiClient.getReviews();
 
       setReviews(reviewsData);
-      setSideMenus(sideMenusData);
 
       // 各レビューのいいね数を取得
       await loadReviewLikes(reviewsData);
@@ -87,12 +84,10 @@ export function ReviewList() {
 
     // 検索フィルター
     if (searchTerm) {
-      filtered = filtered.filter((review) => review.title?.toLowerCase().includes(searchTerm.toLowerCase()) || review.comment?.toLowerCase().includes(searchTerm.toLowerCase()) || review.side_menu?.name.toLowerCase().includes(searchTerm.toLowerCase()) || review.user?.name.toLowerCase().includes(searchTerm.toLowerCase()));
-    }
-
-    // サイドメニューフィルター
-    if (selectedSideMenu !== "all") {
-      filtered = filtered.filter((review) => review.side_menu_id === parseInt(selectedSideMenu));
+      filtered = filtered.filter(
+        (review) =>
+          review.title?.toLowerCase().includes(searchTerm.toLowerCase()) || review.comment?.toLowerCase().includes(searchTerm.toLowerCase()) || review.store_name.toLowerCase().includes(searchTerm.toLowerCase()) || review.side_menu_name.toLowerCase().includes(searchTerm.toLowerCase()) || review.user?.name.toLowerCase().includes(searchTerm.toLowerCase())
+      );
     }
 
     // 評価フィルター
@@ -101,7 +96,7 @@ export function ReviewList() {
     }
 
     setFilteredReviews(filtered);
-  }, [reviews, searchTerm, selectedSideMenu, ratingFilter]);
+  }, [reviews, searchTerm, ratingFilter]);
 
   useEffect(() => {
     loadData();
@@ -209,28 +204,14 @@ export function ReviewList() {
       <Card>
         <CardHeader>
           <CardTitle>検索・フィルター</CardTitle>
-          <CardDescription>レビューのタイトル、コメント、サイドメニュー名で検索し、サイドメニューや評価でフィルタリングできます</CardDescription>
+          <CardDescription>レビューのタイトル、コメント、店舗名、サイドメニュー名で検索し、評価でフィルタリングできます</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <div className="relative sm:col-span-2 lg:col-span-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input placeholder="レビューで検索..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
             </div>
-
-            <Select value={selectedSideMenu} onValueChange={setSelectedSideMenu}>
-              <SelectTrigger>
-                <SelectValue placeholder="サイドメニューを選択" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">すべてのサイドメニュー</SelectItem>
-                {sideMenus.map((sideMenu) => (
-                  <SelectItem key={sideMenu.id} value={sideMenu.id.toString()}>
-                    {sideMenu.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
 
             <Select value={ratingFilter} onValueChange={setRatingFilter}>
               <SelectTrigger>
@@ -268,7 +249,6 @@ export function ReviewList() {
                       <Link to={`/reviews/${review.id}`} className="font-semibold text-lg text-blue-600 hover:text-blue-800 hover:underline">
                         {review.title || "タイトルなし"}
                       </Link>
-                      {review.is_verified && <span className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">購入確認済み</span>}
                     </div>
                     <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
                       <div className="flex items-center gap-1">
@@ -303,9 +283,8 @@ export function ReviewList() {
                     )}
 
                     <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <span className="font-medium">{review.side_menu?.name}</span>
-                      <span>¥{review.side_menu?.price}</span>
-                      <span>@ {review.side_menu?.store?.name}</span>
+                      <span className="font-medium">{review.side_menu_name}</span>
+                      <span>@ {review.store_name}</span>
                       {reviewLikes[review.id] > 0 && (
                         <span className="flex items-center gap-1 text-red-600">
                           <Heart className="h-3 w-3" />
