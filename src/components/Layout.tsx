@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Modal } from "@/components/ui/modal";
-import { Store, Menu, MessageSquare, LogOut, Plus } from "lucide-react";
+import { MessageSquare, LogOut, Plus } from "lucide-react";
 import { authService } from "@/services/auth";
 import { LoginForm } from "./LoginForm";
 import { SignupForm } from "./SignupForm";
@@ -54,15 +54,7 @@ export function Layout({ children, isAuthenticated }: LayoutProps) {
     setIsLoginModalOpen(false);
   };
 
-  const navigation = [
-    { name: "レビュー", href: "/reviews", icon: MessageSquare, public: true },
-    ...(isAuthenticated
-      ? [
-          { name: "店舗管理", href: "/stores", icon: Store, public: false },
-          { name: "サイドメニュー", href: "/side-menus", icon: Menu, public: false },
-        ]
-      : []),
-  ];
+  const navigation = [{ name: "レビュー", href: "/reviews", icon: MessageSquare, public: true }];
 
   const isActive = (path: string) => {
     if (path === "/reviews") {
@@ -129,14 +121,6 @@ export function Layout({ children, isAuthenticated }: LayoutProps) {
                     <Link to="/reviews/new" className="flex items-center px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 hover:text-gray-900 rounded-md transition-colors">
                       <Plus className="h-4 w-4 mr-3" />
                       新規レビュー作成
-                    </Link>
-                    <Link to="/stores/new" className="flex items-center px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 hover:text-gray-900 rounded-md transition-colors">
-                      <Plus className="h-4 w-4 mr-3" />
-                      新規店舗作成
-                    </Link>
-                    <Link to="/side-menus/new" className="flex items-center px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 hover:text-gray-900 rounded-md transition-colors">
-                      <Plus className="h-4 w-4 mr-3" />
-                      新規メニュー作成
                     </Link>
                   </div>
                 </div>

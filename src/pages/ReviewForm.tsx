@@ -4,8 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { apiClient, SideMenu, ReviewCreateRequest } from "@/services/api";
+import { apiClient, ReviewCreateRequest } from "@/services/api";
 import { authService } from "@/services/auth";
 import { ArrowLeft, Save, X, Star, Upload, Image, Trash2 } from "lucide-react";
 
@@ -13,36 +12,16 @@ export function ReviewForm() {
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
-    side_menu_id: "",
+    store_name: "",
+    side_menu_name: "",
     rating: "5",
     title: "",
     comment: "",
   });
-  const [sideMenus, setSideMenus] = useState<SideMenu[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
-
-  useEffect(() => {
-    loadSideMenus();
-  }, []);
-
-  const loadSideMenus = async () => {
-    try {
-      // 実際のAPIからデータを取得
-      const sideMenus = await apiClient.getSideMenus();
-      setSideMenus(sideMenus);
-    } catch (error) {
-      if (error instanceof Error && error.message.includes("ログインが必要です")) {
-        alert("ログインが必要です");
-        // ログイン画面にリダイレクト
-        window.location.href = "/login";
-      } else {
-        setError("サイドメニューデータの読み込みに失敗しました");
-      }
-    }
-  };
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -79,8 +58,8 @@ export function ReviewForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.side_menu_id || !formData.rating) {
-      setError("サイドメニューと評価は必須です");
+    if (!formData.store_name || !formData.side_menu_name || !formData.rating) {
+      setError("店舗名、サイドメニュー名、評価は必須です");
       return;
     }
 
@@ -95,7 +74,8 @@ export function ReviewForm() {
 
       // レビューを作成
       const createData: ReviewCreateRequest = {
-        side_menu_id: parseInt(formData.side_menu_id),
+        store_name: formData.store_name,
+        side_menu_name: formData.side_menu_name,
         rating: parseInt(formData.rating),
         title: formData.title || undefined,
         comment: formData.comment || undefined,
@@ -164,21 +144,17 @@ export function ReviewForm() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="side_menu_id" className="block text-left font-medium text-gray-700">
-                サイドメニュー <span className="text-red-500">*</span>
+              <Label htmlFor="store_name" className="block text-left font-medium text-gray-700">
+                店舗名 <span className="text-red-500">*</span>
               </Label>
-              <Select value={formData.side_menu_id} onValueChange={(value) => handleInputChange("side_menu_id", value)} disabled={loading}>
-                <SelectTrigger>
-                  <SelectValue placeholder="サイドメニューを選択してください" />
-                </SelectTrigger>
-                <SelectContent>
-                  {sideMenus.map((sideMenu) => (
-                    <SelectItem key={sideMenu.id} value={sideMenu.id.toString()}>
-                      {sideMenu.name} - ¥{sideMenu.price} @ {sideMenu.store?.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Input id="store_name" type="text" placeholder="店舗名を入力してください" value={formData.store_name} onChange={(e) => handleInputChange("store_name", e.target.value)} disabled={loading} />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="side_menu_name" className="block text-left font-medium text-gray-700">
+                サイドメニュー名 <span className="text-red-500">*</span>
+              </Label>
+              <Input id="side_menu_name" type="text" placeholder="サイドメニュー名を入力してください" value={formData.side_menu_name} onChange={(e) => handleInputChange("side_menu_name", e.target.value)} disabled={loading} />
             </div>
 
             <div className="space-y-2">

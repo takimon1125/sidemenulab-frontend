@@ -318,7 +318,7 @@ export function ReviewDetail() {
                     <div className="flex items-center gap-1">{renderStars(review.rating)}</div>
                     <span className="text-sm text-gray-600">{review.rating}/5</span>
                   </div>
-                  {review.comment && <p className="text-gray-700 mb-3">{review.comment}</p>}
+                  {review.comment && <p className="text-gray-700 mb-3 whitespace-pre-wrap">{review.comment}</p>}
 
                   {/* 画像表示 */}
                   <div className="mb-4">
@@ -360,9 +360,8 @@ export function ReviewDetail() {
                   </div>
 
                   <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <span className="font-medium">{review.side_menu?.name}</span>
-                    <span>¥{review.side_menu?.price}</span>
-                    <span>@ {review.side_menu?.store?.name}</span>
+                    <span className="font-medium">{review.side_menu_name}</span>
+                    <span>@ {review.store_name}</span>
                   </div>
                 </div>
                 {isAuthenticated && (
@@ -422,7 +421,7 @@ export function ReviewDetail() {
                       </Button>
                     )}
                   </div>
-                  <p className="text-gray-800">{comment.comment}</p>
+                  <p className="text-gray-800 whitespace-pre-wrap">{comment.comment}</p>
                 </div>
               ))
             )}

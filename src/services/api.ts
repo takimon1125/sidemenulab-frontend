@@ -38,61 +38,11 @@ export interface SignInRequest {
   password: string;
 }
 
-// 店舗関連の型定義
-export interface Store {
-  id: number;
-  name: string;
-  address: string;
-  phone: string;
-  created_at: string;
-  updated_at: string;
-  deleted_at?: string | null;
-}
-
-export interface StoreCreateRequest {
-  name: string;
-  address: string;
-  phone: string;
-}
-
-export interface StoreUpdateRequest {
-  name?: string;
-  address?: string;
-  phone?: string;
-}
-
-// サイドメニュー関連の型定義
-export interface SideMenu {
-  id: number;
-  store_id: number;
-  name: string;
-  description: string;
-  price: number;
-  store?: Store;
-  created_at: string;
-  updated_at: string;
-  deleted_at?: string | null;
-}
-
-export interface SideMenuCreateRequest {
-  store_id: number;
-  name: string;
-  description: string;
-  price: number;
-}
-
-export interface SideMenuUpdateRequest {
-  store_id?: number;
-  name?: string;
-  description?: string;
-  price?: number;
-}
-
 // レビュー関連の型定義
 export interface Review {
   id: number;
-  side_menu_id: number;
-  side_menu?: SideMenu;
+  store_name: string;
+  side_menu_name: string;
   user_id: number;
   user?: User;
   rating: number;
@@ -106,7 +56,8 @@ export interface Review {
 }
 
 export interface ReviewCreateRequest {
-  side_menu_id: number;
+  store_name: string;
+  side_menu_name: string;
   rating: number;
   title?: string;
   comment?: string;
@@ -244,75 +195,9 @@ export class ApiClient {
     });
   }
 
-  // 店舗一覧取得
-  async getStores(): Promise<Store[]> {
-    const response = await this.authenticatedRequest<{ data: Store[] }>("/stores", {
-      method: "GET",
-    });
-    return response.data;
-  }
-
-  // 店舗詳細取得
-  async getStore(id: number): Promise<Store> {
-    const response = await this.authenticatedRequest<{ data: Store }>(`/stores/${id}`, {
-      method: "GET",
-    });
-    return response.data;
-  }
-
-  // 店舗作成
-  async createStore(data: StoreCreateRequest): Promise<Store> {
-    const response = await this.authenticatedRequest<{ data: Store }>("/stores", {
-      method: "POST",
-      body: JSON.stringify(data),
-    });
-    return response.data;
-  }
-
-  // サイドメニュー一覧取得（ログイン不要 - レビュー表示用）
-  async getSideMenus(): Promise<SideMenu[]> {
-    const response = await this.request<{ data: SideMenu[] }>("/side-menus", {
-      method: "GET",
-    });
-    return response.data;
-  }
-
-  // サイドメニュー詳細取得
-  async getSideMenu(id: number): Promise<SideMenu> {
-    const response = await this.authenticatedRequest<{ data: SideMenu }>(`/side-menus/${id}`, {
-      method: "GET",
-    });
-    return response.data;
-  }
-
-  // 店舗別サイドメニュー一覧取得
-  async getSideMenusByStore(storeId: number): Promise<SideMenu[]> {
-    const response = await this.authenticatedRequest<{ data: SideMenu[] }>(`/side-menus/store/${storeId}`, {
-      method: "GET",
-    });
-    return response.data;
-  }
-
-  // サイドメニュー作成
-  async createSideMenu(data: SideMenuCreateRequest): Promise<SideMenu> {
-    const response = await this.authenticatedRequest<{ data: SideMenu }>("/side-menus", {
-      method: "POST",
-      body: JSON.stringify(data),
-    });
-    return response.data;
-  }
-
   // レビュー一覧取得（ログイン不要）
   async getReviews(): Promise<Review[]> {
     const response = await this.request<{ data: Review[] }>("/reviews", {
-      method: "GET",
-    });
-    return response.data;
-  }
-
-  // サイドメニュー別レビュー一覧取得
-  async getReviewsBySideMenu(sideMenuId: number): Promise<Review[]> {
-    const response = await this.authenticatedRequest<{ data: Review[] }>(`/reviews/side-menu/${sideMenuId}`, {
       method: "GET",
     });
     return response.data;
