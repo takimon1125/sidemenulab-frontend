@@ -356,9 +356,9 @@ export class ApiClient {
     });
   }
 
-  // レビューのイイネ一覧取得
+  // レビューのイイネ一覧取得（認証不要）
   async getReviewLikes(reviewId: number): Promise<ReviewLike[]> {
-    const response = await this.authenticatedRequest<{ data: ReviewLike[] }>(`/reviews/${reviewId}/likes`, {
+    const response = await this.request<{ data: ReviewLike[] }>(`/reviews/${reviewId}/likes`, {
       method: "GET",
     });
     return response.data;
