@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { apiClient, type Review, type SideMenu } from "@/services/api";
-import { Plus, Search, Star, Heart, MessageSquare, User, Calendar } from "lucide-react";
+import { Plus, Search, Star, Heart, MessageSquare, User, Calendar, Image as ImageIcon } from "lucide-react";
 import { authService } from "@/services/auth";
 
 export function ReviewList() {
@@ -285,6 +285,23 @@ export function ReviewList() {
                       <span className="text-sm text-gray-600">{review.rating}/5</span>
                     </div>
                     {review.comment && <p className="text-gray-700 mb-3">{review.comment}</p>}
+
+                    {/* 画像表示 */}
+                    {review.images && review.images.length > 0 && (
+                      <div className="mb-3">
+                        <div className="flex items-center gap-2 mb-2">
+                          <ImageIcon className="h-4 w-4 text-gray-500" />
+                          <span className="text-sm text-gray-600">画像 ({review.images.length}枚)</span>
+                        </div>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                          {review.images.slice(0, 4).map((image, index) => (
+                            <img key={image.id} src={image.image_url} alt={`レビュー画像 ${index + 1}`} className="w-full h-20 object-cover rounded-lg border border-gray-200 hover:opacity-80 transition-opacity cursor-pointer" onClick={() => window.open(image.image_url, "_blank")} />
+                          ))}
+                          {review.images.length > 4 && <div className="w-full h-20 bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center text-gray-500 text-sm">+{review.images.length - 4}</div>}
+                        </div>
+                      </div>
+                    )}
+
                     <div className="flex items-center gap-2 text-sm text-gray-600">
                       <span className="font-medium">{review.side_menu?.name}</span>
                       <span>¥{review.side_menu?.price}</span>

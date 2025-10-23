@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "../components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { apiClient, type Review, type ReviewComment } from "@/services/api";
-import { Star, Heart, MessageSquare, User, Calendar, Edit, Trash2, Send, ArrowLeft } from "lucide-react";
+import { Star, Heart, MessageSquare, User, Calendar, Edit, Trash2, Send, ArrowLeft, Image as ImageIcon } from "lucide-react";
 import { authService } from "@/services/auth";
 
 export function ReviewDetail() {
@@ -46,43 +46,40 @@ export function ReviewDetail() {
       setLoading(true);
       setError(null);
 
-      try {
-        const reviewData = await apiClient.getReview(parseInt(id));
-        setReview(reviewData);
+      const reviewData = await apiClient.getReview(parseInt(id));
+      console.log("取得したレビューデータ:", reviewData);
+      console.log("画像データ:", reviewData.images);
+      setReview(reviewData);
 
-        // 編集フォームに現在の値を設定
-        setEditForm({
-          title: reviewData.title || "",
-          comment: reviewData.comment || "",
-          rating: reviewData.rating,
-        });
+      // 編集フォームに現在の値を設定
+      setEditForm({
+        title: reviewData.title || "",
+        comment: reviewData.comment || "",
+        rating: reviewData.rating,
+      });
 
-        // コメントといいね情報を並行して取得
-        const [commentsData, likesData] = await Promise.all([
-          apiClient.getReviewComments(parseInt(id)).catch((err) => {
-            console.warn("Failed to load comments:", err);
-            return [];
-          }),
-          apiClient.getReviewLikes(parseInt(id)).catch((err) => {
-            console.warn("Failed to load likes:", err);
-            return [];
-          }),
-        ]);
+      // コメントといいね情報を並行して取得
+      const [commentsData, likesData] = await Promise.all([
+        apiClient.getReviewComments(parseInt(id)).catch((err) => {
+          console.warn("Failed to load comments:", err);
+          return [];
+        }),
+        apiClient.getReviewLikes(parseInt(id)).catch((err) => {
+          console.warn("Failed to load likes:", err);
+          return [];
+        }),
+      ]);
 
-        setComments(commentsData);
-        setLikeCount(likesData.length);
+      setComments(commentsData);
+      setLikeCount(likesData.length);
 
-        // ログインユーザーがいいねしているかチェック
-        if (isAuthenticated) {
-          const currentUser = authService.getCurrentUser();
-          if (currentUser) {
-            const userLiked = likesData.some((like) => like.user_id === currentUser.id);
-            setIsLiked(userLiked);
-          }
+      // ログインユーザーがいいねしているかチェック
+      if (isAuthenticated) {
+        const currentUser = authService.getCurrentUser();
+        if (currentUser) {
+          const userLiked = likesData.some((like) => like.user_id === currentUser.id);
+          setIsLiked(userLiked);
         }
-      } catch (reviewError) {
-        console.error("Failed to load review:", reviewError);
-        throw reviewError;
       }
     } catch (error) {
       console.error("Error loading review detail:", error);
@@ -202,7 +199,7 @@ export function ReviewDetail() {
         await apiClient.deleteReviewComment(commentId);
         setComments((prev) => prev.filter((comment) => comment.id !== commentId));
         alert("コメントを削除しました");
-      } catch (error) {
+      } catch {
         alert("コメントの削除に失敗しました");
       }
     }
@@ -322,6 +319,46 @@ export function ReviewDetail() {
                     <span className="text-sm text-gray-600">{review.rating}/5</span>
                   </div>
                   {review.comment && <p className="text-gray-700 mb-3">{review.comment}</p>}
+
+                  {/* 画像表示 */}
+                  <div className="mb-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <ImageIcon className="h-5 w-5 text-gray-500" />
+                      <h3 className="text-lg font-medium text-gray-900">画像 ({review.images ? review.images.length : 0}枚)</h3>
+                    </div>
+
+                    {review.images && review.images.length > 0 ? (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {review.images.map((image, index) => {
+                          console.log("画像データ:", image);
+                          return (
+                            <div key={image.id} className="relative group">
+                              <img
+                                src={image.image_url}
+                                alt={`レビュー画像 ${index + 1}`}
+                                className="w-full h-48 object-contain rounded-lg border border-gray-200 bg-gray-100"
+                                onLoad={() => {
+                                  console.log("画像読み込み成功:", image.image_url);
+                                }}
+                                onError={(e) => {
+                                  console.error("画像読み込みエラー:", image.image_url);
+                                  e.currentTarget.style.display = "none";
+                                }}
+                              />
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                        <div className="flex items-center gap-2 text-gray-500">
+                          <ImageIcon className="h-5 w-5" />
+                          <p className="text-sm">画像はありません</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
                   <div className="flex items-center gap-2 text-sm text-gray-600">
                     <span className="font-medium">{review.side_menu?.name}</span>
                     <span>¥{review.side_menu?.price}</span>
