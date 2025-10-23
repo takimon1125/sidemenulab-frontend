@@ -46,11 +46,8 @@ export function ReviewDetail() {
       setLoading(true);
       setError(null);
 
-      console.log("Loading review detail for ID:", id);
-
       try {
         const reviewData = await apiClient.getReview(parseInt(id));
-        console.log("Review data loaded:", reviewData);
         setReview(reviewData);
 
         // 編集フォームに現在の値を設定
@@ -176,6 +173,7 @@ export function ReviewDetail() {
 
     try {
       setSubmittingComment(true);
+
       const comment = await apiClient.createReviewComment(review.id, {
         content: newComment.trim(),
       });
@@ -183,10 +181,11 @@ export function ReviewDetail() {
       setComments((prev) => [...prev, comment]);
       setNewComment("");
     } catch (error) {
+      console.error("Comment submission error:", error);
       if (error instanceof Error && error.message.includes("ログインが必要です")) {
         alert("ログインが必要です");
       } else {
-        alert("コメントの投稿に失敗しました");
+        alert(`コメントの投稿に失敗しました: ${error instanceof Error ? error.message : "不明なエラー"}`);
       }
     } finally {
       setSubmittingComment(false);
@@ -386,7 +385,7 @@ export function ReviewDetail() {
                       </Button>
                     )}
                   </div>
-                  <p className="text-gray-800">{comment.content}</p>
+                  <p className="text-gray-800">{comment.comment}</p>
                 </div>
               ))
             )}
