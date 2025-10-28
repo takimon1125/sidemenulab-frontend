@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { apiClient, DashboardStats, SideMenu, Review } from "@/services/api";
+import { apiClient } from "@/services/api";
+import type { DashboardStats, Review, SideMenu } from "@/services/api";
 import { Store, Menu, Plus, TrendingUp, MessageSquare } from "lucide-react";
 
 export function Dashboard() {
@@ -19,18 +20,18 @@ export function Dashboard() {
       setLoading(true);
       setError(null);
 
-      // 実際のAPIからデータを取得
-      const [stores, sideMenus, reviews] = await Promise.all([apiClient.getStores(), apiClient.getSideMenus(), apiClient.getReviews()]);
-
-      // 最近追加されたサイドメニュー（最新3件）
-      const recentSideMenus = sideMenus.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 3);
+      // 実際のAPIからレビューを取得
+      const reviews = await apiClient.getReviews();
 
       // 最近追加されたレビュー（最新3件）
-      const recentReviews = reviews.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 3);
+      const recentReviews = reviews.sort((a: Review, b: Review) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 3);
+
+      // ダミーのサイドメニューデータ（現在はAPIにないため）
+      const recentSideMenus: SideMenu[] = [];
 
       const stats: DashboardStats = {
-        total_stores: stores.length,
-        total_side_menus: sideMenus.length,
+        total_stores: 0, // APIにないため0
+        total_side_menus: 0, // APIにないため0
         total_reviews: reviews.length,
         recent_side_menus: recentSideMenus,
         recent_reviews: recentReviews,
@@ -150,7 +151,7 @@ export function Dashboard() {
                   <h3 className="font-medium text-gray-900">{review.title || "タイトルなし"}</h3>
                   <p className="text-sm text-gray-600">{review.comment}</p>
                   <p className="text-sm text-gray-500">
-                    {review.side_menu?.name} @ {review.side_menu?.store?.name}
+                    {review.side_menu_name} @ {review.store_name}
                   </p>
                 </div>
                 <div className="flex items-center justify-between sm:flex-col sm:items-end sm:text-right">

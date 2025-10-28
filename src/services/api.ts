@@ -1,5 +1,7 @@
+import { config } from "@/config/environment";
+
 // APIクライアントの設定
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api/v1";
+const API_BASE_URL = config.apiBaseUrl;
 
 // APIレスポンスの型定義
 export interface ApiResponse<T> {
@@ -93,6 +95,16 @@ export interface ReviewComment {
   created_at: string;
 }
 
+// サイドメニューの型定義（ダッシュボード用）
+export interface SideMenu {
+  id: number;
+  name: string;
+  description?: string;
+  price: number;
+  store?: { name: string };
+  created_at: string;
+}
+
 // ダッシュボード統計の型定義
 export interface DashboardStats {
   total_stores: number;
@@ -133,7 +145,7 @@ export class ApiClient {
         try {
           const errorData = await response.json();
           errorMessage = errorData.error || errorMessage;
-        } catch (parseError) {
+        } catch {
           errorMessage = `HTTP ${response.status}: ${response.statusText}`;
         }
         throw new Error(errorMessage);
@@ -146,10 +158,10 @@ export class ApiClient {
 
       try {
         return JSON.parse(responseText);
-      } catch (parseError) {
-        console.error("JSONパースエラー:", parseError);
+      } catch (error) {
+        console.error("JSONパースエラー:", error);
         console.error("レスポンステキスト:", responseText);
-        throw new Error(`JSONパースエラー: ${parseError instanceof Error ? parseError.message : "不明なエラー"}`);
+        throw new Error(`JSONパースエラー: ${error instanceof Error ? error.message : "不明なエラー"}`);
       }
     } catch (error) {
       if (error instanceof Error) {
@@ -200,7 +212,7 @@ export class ApiClient {
     const response = await this.request<{ data: Review[] }>("/reviews", {
       method: "GET",
     });
-    return response.data;
+    return response.data as unknown as Review[];
   }
 
   // いいねしたレビュー一覧取得
@@ -208,7 +220,7 @@ export class ApiClient {
     const response = await this.authenticatedRequest<{ data: Review[] }>("/reviews/liked", {
       method: "GET",
     });
-    return response.data;
+    return response.data as unknown as Review[];
   }
 
   // レビュー作成
@@ -217,23 +229,7 @@ export class ApiClient {
       method: "POST",
       body: JSON.stringify(data),
     });
-    return response.data;
-  }
-
-  // レビュー編集
-  async updateReview(reviewId: number, data: ReviewCreateRequest): Promise<Review> {
-    const response = await this.authenticatedRequest<{ data: Review }>(`/reviews/${reviewId}`, {
-      method: "PUT",
-      body: JSON.stringify(data),
-    });
-    return response.data;
-  }
-
-  // レビュー削除
-  async deleteReview(reviewId: number): Promise<void> {
-    await this.authenticatedRequest(`/reviews/${reviewId}`, {
-      method: "DELETE",
-    });
+    return response.data as unknown as Review;
   }
 
   // レビュー画像アップロード
@@ -242,7 +238,7 @@ export class ApiClient {
       method: "POST",
       body: JSON.stringify(data),
     });
-    return response.data;
+    return response.data as unknown as ReviewImage;
   }
 
   // レビュー画像削除
@@ -277,7 +273,7 @@ export class ApiClient {
       try {
         const errorData = await response.json();
         errorMessage = errorData.error || errorMessage;
-      } catch (parseError) {
+      } catch {
         errorMessage = `HTTP ${response.status}: ${response.statusText}`;
       }
       throw new Error(errorMessage);
@@ -292,7 +288,7 @@ export class ApiClient {
     const response = await this.authenticatedRequest<{ data: ReviewImage[] }>(`/reviews/${reviewId}/images`, {
       method: "GET",
     });
-    return response.data;
+    return response.data as unknown as ReviewImage[];
   }
 
   // レビューにイイネ
@@ -300,7 +296,7 @@ export class ApiClient {
     const response = await this.authenticatedRequest<{ data: ReviewLike }>(`/reviews/${reviewId}/like`, {
       method: "POST",
     });
-    return response.data;
+    return response.data as unknown as ReviewLike;
   }
 
   // レビューのイイネ取り消し
@@ -315,7 +311,7 @@ export class ApiClient {
     const response = await this.request<{ data: ReviewLike[] }>(`/reviews/${reviewId}/likes`, {
       method: "GET",
     });
-    return response.data;
+    return response.data as unknown as ReviewLike[];
   }
 
   // レビュー詳細取得
@@ -323,7 +319,7 @@ export class ApiClient {
     const response = await this.request<{ data: Review }>(`/reviews/${reviewId}`, {
       method: "GET",
     });
-    return response.data;
+    return response.data as unknown as Review;
   }
 
   // レビュー更新
@@ -335,7 +331,7 @@ export class ApiClient {
       },
       body: JSON.stringify(data),
     });
-    return response.data;
+    return response.data as unknown as Review;
   }
 
   // レビュー削除
@@ -350,7 +346,7 @@ export class ApiClient {
     const response = await this.request<{ data: ReviewComment[] }>(`/review-comments/review/${reviewId}`, {
       method: "GET",
     });
-    return response.data;
+    return response.data as unknown as ReviewComment[];
   }
 
   // レビューコメント作成
@@ -365,7 +361,7 @@ export class ApiClient {
         Comment: data.content, // バックエンドが期待するフィールド名
       }),
     });
-    return response.data;
+    return response.data as unknown as ReviewComment;
   }
 
   // レビューコメント更新
@@ -379,7 +375,7 @@ export class ApiClient {
         Comment: data.content, // バックエンドが期待するフィールド名
       }),
     });
-    return response.data;
+    return response.data as unknown as ReviewComment;
   }
 
   // レビューコメント削除

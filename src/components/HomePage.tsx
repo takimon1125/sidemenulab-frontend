@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { authService, AuthState } from "@/services/auth";
+import { authService } from "@/services/auth";
+import type { AuthState } from "@/services/auth";
 
 export function HomePage() {
   const [authState, setAuthState] = useState<AuthState>({
