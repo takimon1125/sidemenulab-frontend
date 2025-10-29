@@ -323,7 +323,7 @@ export class ApiClient {
   }
 
   // レビュー更新
-  async updateReview(reviewId: number, data: { title?: string; comment?: string; rating?: number }): Promise<Review> {
+  async updateReview(reviewId: number, data: ReviewCreateRequest): Promise<Review> {
     const response = await this.authenticatedRequest<Review>(`/reviews/${reviewId}`, {
       method: "PUT",
       headers: {

@@ -26,6 +26,8 @@ export function ReviewDetail() {
 
   // 編集用のフォーム状態
   const [editForm, setEditForm] = useState({
+    store_name: "",
+    side_menu_name: "",
     title: "",
     comment: "",
     rating: 5,
@@ -66,6 +68,8 @@ export function ReviewDetail() {
 
       // 編集フォームに現在の値を設定
       setEditForm({
+        store_name: reviewData.store_name || "",
+        side_menu_name: reviewData.side_menu_name || "",
         title: reviewData.title || "",
         comment: reviewData.comment || "",
         rating: reviewData.rating,
@@ -131,6 +135,10 @@ export function ReviewDetail() {
   };
 
   const handleEdit = () => {
+    if (!review) {
+      console.error("レビューデータが存在しません");
+      return;
+    }
     setIsEditing(true);
   };
 
@@ -139,6 +147,8 @@ export function ReviewDetail() {
     // フォームを元の値にリセット
     if (review) {
       setEditForm({
+        store_name: review.store_name || "",
+        side_menu_name: review.side_menu_name || "",
         title: review.title || "",
         comment: review.comment || "",
         rating: review.rating,
@@ -193,11 +203,19 @@ export function ReviewDetail() {
   const handleSaveEdit = async () => {
     if (!review || saving) return;
 
+    // バリデーション
+    if (!editForm.store_name || !editForm.side_menu_name) {
+      alert("店舗名とサイドメニュー名は必須です");
+      return;
+    }
+
     try {
       setSaving(true);
 
       // レビュー内容を更新
       await apiClient.updateReview(review.id, {
+        store_name: editForm.store_name,
+        side_menu_name: editForm.side_menu_name,
         title: editForm.title,
         comment: editForm.comment,
         rating: editForm.rating,
@@ -357,15 +375,27 @@ export function ReviewDetail() {
       {/* レビュー内容 */}
       <Card>
         <CardContent className="p-6">
-          {isEditing ? (
+          {isEditing && review ? (
             <div className="space-y-4">
               <div>
+                <Label htmlFor="store_name">
+                  店舗名 <span className="text-red-500">*</span>
+                </Label>
+                <Input id="store_name" type="text" value={editForm.store_name} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditForm((prev) => ({ ...prev, store_name: e.target.value }))} placeholder="店舗名を入力してください" disabled={saving} />
+              </div>
+              <div>
+                <Label htmlFor="side_menu_name">
+                  サイドメニュー名 <span className="text-red-500">*</span>
+                </Label>
+                <Input id="side_menu_name" type="text" value={editForm.side_menu_name} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditForm((prev) => ({ ...prev, side_menu_name: e.target.value }))} placeholder="サイドメニュー名を入力してください" disabled={saving} />
+              </div>
+              <div>
                 <Label htmlFor="title">タイトル</Label>
-                <Input id="title" value={editForm.title} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditForm((prev) => ({ ...prev, title: e.target.value }))} placeholder="レビューのタイトル" />
+                <Input id="title" value={editForm.title} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditForm((prev) => ({ ...prev, title: e.target.value }))} placeholder="レビューのタイトル" disabled={saving} />
               </div>
               <div>
                 <Label htmlFor="rating">評価</Label>
-                <Select value={editForm.rating.toString()} onValueChange={(value) => setEditForm((prev) => ({ ...prev, rating: parseInt(value) }))}>
+                <Select value={editForm.rating.toString()} onValueChange={(value) => setEditForm((prev) => ({ ...prev, rating: parseInt(value) }))} disabled={saving}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -380,7 +410,7 @@ export function ReviewDetail() {
               </div>
               <div>
                 <Label htmlFor="comment">コメント</Label>
-                <Textarea id="comment" value={editForm.comment} onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setEditForm((prev) => ({ ...prev, comment: e.target.value }))} placeholder="レビューのコメント" rows={4} />
+                <Textarea id="comment" value={editForm.comment} onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setEditForm((prev) => ({ ...prev, comment: e.target.value }))} placeholder="レビューのコメント" rows={4} disabled={saving} />
               </div>
 
               {/* 画像アップロード機能 */}
