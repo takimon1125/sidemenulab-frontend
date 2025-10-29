@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,10 @@ import { ArrowLeft, Save, X, Star, Upload, Trash2 } from "lucide-react";
 
 export function ReviewForm() {
   const navigate = useNavigate();
+
+  useEffect(() => {
+    document.title = "レビュー作成 | サイドメニュー研究所";
+  }, []);
 
   const [formData, setFormData] = useState({
     store_name: "",

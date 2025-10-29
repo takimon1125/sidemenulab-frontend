@@ -23,6 +23,10 @@ export function LikedReviews() {
     setIsAuthenticated(authService.isAuthenticated());
   }, []);
 
+  useEffect(() => {
+    document.title = "いいねしたレビュー | サイドメニュー研究所";
+  }, []);
+
   const loadReviewLikes = useCallback(
     async (reviews: Review[]) => {
       try {

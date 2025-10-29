@@ -12,6 +12,10 @@ export function Dashboard() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    document.title = "ダッシュボード | サイドメニュー研究所";
+  }, []);
+
+  useEffect(() => {
     loadDashboardData();
   }, []);
 
