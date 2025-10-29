@@ -188,9 +188,7 @@ export function ReviewDetail() {
       setSaving(true);
 
       // レビュー内容を更新
-      const updatedReview = await apiClient.updateReview(review.id, {
-        store_name: review.store_name,
-        side_menu_name: review.side_menu_name,
+      await apiClient.updateReview(review.id, {
         title: editForm.title,
         comment: editForm.comment,
         rating: editForm.rating,

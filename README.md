@@ -34,10 +34,11 @@ npm install
 # API Base URL
 VITE_API_BASE_URL=http://localhost:8080/api/v1
 
-# その他の設定
-VITE_APP_NAME=Sidemenulab Frontend
-VITE_APP_VERSION=1.0.0
+# デバッグモード（ローカル開発環境ではtrue推奨）
+VITE_DEBUG_MODE=true
 ```
+
+詳細な環境設定については、[ENVIRONMENT_SETUP.md](./ENVIRONMENT_SETUP.md) を参照してください。
 
 ### 3. 開発サーバーの起動
 
@@ -52,16 +53,19 @@ npm run dev
 | 変数名              | 説明                          | デフォルト値                   |
 | ------------------- | ----------------------------- | ------------------------------ |
 | `VITE_API_BASE_URL` | バックエンド API のベース URL | `http://localhost:8080/api/v1` |
-| `VITE_APP_NAME`     | アプリケーション名            | `Sidemenulab Frontend`         |
-| `VITE_APP_VERSION`  | アプリケーションのバージョン  | `1.0.0`                        |
+| `VITE_DEBUG_MODE`   | デバッグモードの有効化        | `false` (本番) / `true` (開発) |
 
 ## プロダクション環境での設定
 
-本番環境では、以下の環境変数を適切に設定してください：
+### Vercel へのデプロイ
 
-```bash
-VITE_API_BASE_URL=https://your-api-domain.com/api/v1
-```
+詳細な手順については、[ENVIRONMENT_SETUP.md](./ENVIRONMENT_SETUP.md) を参照してください。
+
+簡単な手順：
+
+1. Vercel にプロジェクトをインポート
+2. Environment Variables で `VITE_API_BASE_URL` を設定
+3. デプロイ
 
 ## バックエンドとの連携
 

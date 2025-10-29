@@ -1,4 +1,7 @@
-import { apiClient, AuthResponse, SignUpRequest, SignInRequest } from "./api";
+import { apiClient } from "./api";
+import type { AuthResponse } from "./api";
+import type { SignUpRequest } from "./api";
+import type { SignInRequest } from "./api";
 
 // 認証状態の型定義
 export interface AuthState {

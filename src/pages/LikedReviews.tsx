@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { apiClient, type Review } from "@/services/api";
-import { Plus, Search, Star, Heart, MessageSquare, User, Calendar, Image as ImageIcon, ArrowLeft } from "lucide-react";
+import { Plus, Search, Star, Heart, User, Calendar, Image as ImageIcon, ArrowLeft } from "lucide-react";
 import { authService } from "@/services/auth";
 
 export function LikedReviews() {
