@@ -12,6 +12,10 @@ export function HomePage() {
   });
 
   useEffect(() => {
+    document.title = "ホーム | サイドメニュー研究所";
+  }, []);
+
+  useEffect(() => {
     const currentAuthState = authService.getAuthState();
     setAuthState(currentAuthState);
   }, []);

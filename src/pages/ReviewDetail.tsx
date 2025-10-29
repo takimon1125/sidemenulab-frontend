@@ -39,6 +39,15 @@ export function ReviewDetail() {
     setIsAuthenticated(authService.isAuthenticated());
   }, []);
 
+  useEffect(() => {
+    if (review) {
+      const reviewTitle = review.title || "タイトルなし";
+      document.title = `${reviewTitle} | サイドメニュー研究所`;
+    } else {
+      document.title = "レビュー詳細 | サイドメニュー研究所";
+    }
+  }, [review]);
+
   const loadReviewDetail = useCallback(async () => {
     if (!id) {
       setError("レビューIDが指定されていません");
