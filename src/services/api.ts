@@ -209,36 +209,36 @@ export class ApiClient {
 
   // レビュー一覧取得（ログイン不要）
   async getReviews(): Promise<Review[]> {
-    const response = await this.request<{ data: Review[] }>("/reviews", {
+    const response = await this.request<Review[]>("/reviews", {
       method: "GET",
     });
-    return response.data as unknown as Review[];
+    return response.data;
   }
 
   // いいねしたレビュー一覧取得
   async getLikedReviews(): Promise<Review[]> {
-    const response = await this.authenticatedRequest<{ data: Review[] }>("/reviews/liked", {
+    const response = await this.authenticatedRequest<Review[]>("/reviews/liked", {
       method: "GET",
     });
-    return response.data as unknown as Review[];
+    return response.data;
   }
 
   // レビュー作成
   async createReview(data: ReviewCreateRequest): Promise<Review> {
-    const response = await this.authenticatedRequest<{ data: Review }>("/reviews", {
+    const response = await this.authenticatedRequest<Review>("/reviews", {
       method: "POST",
       body: JSON.stringify(data),
     });
-    return response.data as unknown as Review;
+    return response.data;
   }
 
   // レビュー画像アップロード
   async uploadReviewImage(reviewId: number, data: ReviewImageCreateRequest): Promise<ReviewImage> {
-    const response = await this.authenticatedRequest<{ data: ReviewImage }>(`/reviews/${reviewId}/images`, {
+    const response = await this.authenticatedRequest<ReviewImage>(`/reviews/${reviewId}/images`, {
       method: "POST",
       body: JSON.stringify(data),
     });
-    return response.data as unknown as ReviewImage;
+    return response.data;
   }
 
   // レビュー画像削除
@@ -285,18 +285,18 @@ export class ApiClient {
 
   // レビュー画像一覧取得
   async getReviewImages(reviewId: number): Promise<ReviewImage[]> {
-    const response = await this.authenticatedRequest<{ data: ReviewImage[] }>(`/reviews/${reviewId}/images`, {
+    const response = await this.authenticatedRequest<ReviewImage[]>(`/reviews/${reviewId}/images`, {
       method: "GET",
     });
-    return response.data as unknown as ReviewImage[];
+    return response.data;
   }
 
   // レビューにイイネ
   async likeReview(reviewId: number): Promise<ReviewLike> {
-    const response = await this.authenticatedRequest<{ data: ReviewLike }>(`/reviews/${reviewId}/like`, {
+    const response = await this.authenticatedRequest<ReviewLike>(`/reviews/${reviewId}/like`, {
       method: "POST",
     });
-    return response.data as unknown as ReviewLike;
+    return response.data;
   }
 
   // レビューのイイネ取り消し
@@ -308,30 +308,30 @@ export class ApiClient {
 
   // レビューのイイネ一覧取得（認証不要）
   async getReviewLikes(reviewId: number): Promise<ReviewLike[]> {
-    const response = await this.request<{ data: ReviewLike[] }>(`/reviews/${reviewId}/likes`, {
+    const response = await this.request<ReviewLike[]>(`/reviews/${reviewId}/likes`, {
       method: "GET",
     });
-    return response.data as unknown as ReviewLike[];
+    return response.data;
   }
 
   // レビュー詳細取得
   async getReview(reviewId: number): Promise<Review> {
-    const response = await this.request<{ data: Review }>(`/reviews/${reviewId}`, {
+    const response = await this.request<Review>(`/reviews/${reviewId}`, {
       method: "GET",
     });
-    return response.data as unknown as Review;
+    return response.data;
   }
 
   // レビュー更新
   async updateReview(reviewId: number, data: { title?: string; comment?: string; rating?: number }): Promise<Review> {
-    const response = await this.authenticatedRequest<{ data: Review }>(`/reviews/${reviewId}`, {
+    const response = await this.authenticatedRequest<Review>(`/reviews/${reviewId}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify(data),
     });
-    return response.data as unknown as Review;
+    return response.data;
   }
 
   // レビュー削除
@@ -343,15 +343,15 @@ export class ApiClient {
 
   // レビューコメント一覧取得
   async getReviewComments(reviewId: number): Promise<ReviewComment[]> {
-    const response = await this.request<{ data: ReviewComment[] }>(`/review-comments/review/${reviewId}`, {
+    const response = await this.request<ReviewComment[]>(`/review-comments/review/${reviewId}`, {
       method: "GET",
     });
-    return response.data as unknown as ReviewComment[];
+    return response.data;
   }
 
   // レビューコメント作成
   async createReviewComment(reviewId: number, data: { content: string }): Promise<ReviewComment> {
-    const response = await this.authenticatedRequest<{ data: ReviewComment }>("/review-comments", {
+    const response = await this.authenticatedRequest<ReviewComment>("/review-comments", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -361,12 +361,12 @@ export class ApiClient {
         Comment: data.content, // バックエンドが期待するフィールド名
       }),
     });
-    return response.data as unknown as ReviewComment;
+    return response.data;
   }
 
   // レビューコメント更新
   async updateReviewComment(commentId: number, data: { content: string }): Promise<ReviewComment> {
-    const response = await this.authenticatedRequest<{ data: ReviewComment }>(`/review-comments/${commentId}`, {
+    const response = await this.authenticatedRequest<ReviewComment>(`/review-comments/${commentId}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -375,7 +375,7 @@ export class ApiClient {
         Comment: data.content, // バックエンドが期待するフィールド名
       }),
     });
-    return response.data as unknown as ReviewComment;
+    return response.data;
   }
 
   // レビューコメント削除
